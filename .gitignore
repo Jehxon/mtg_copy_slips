@@ -1,0 +1,3 @@
+# Cache Scryfall et decks sauvegardés (propres à chaque machine)
+data/
+__pycache__/

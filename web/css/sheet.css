@@ -1,0 +1,358 @@
+/* ==========================================================================
+   Feuilles imprimables : pages, rectangles (taille carte) et miniatures.
+   Toutes les dimensions sont en mm/pt : l'aperçu est exactement ce qui
+   sera imprimé (l'aperçu est seulement mis à l'échelle via transform).
+   ========================================================================== */
+
+:root {
+  --mini-font: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --veil: 0.7;
+  --zoom: 0.6;
+}
+
+.page,
+.page *,
+#measure * {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ---------- Page ---------- */
+.page-wrap {
+  position: relative;
+  flex: none;
+}
+.page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  background: #fff;
+  transform: scale(var(--zoom));
+  transform-origin: 0 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.page-num {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font: 12px/1 system-ui, sans-serif;
+  color: #5b5e66;
+}
+.marks {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+/* ---------- Rectangle (glissé dans la sleeve) ---------- */
+.slip {
+  position: absolute;
+  box-sizing: border-box;
+  display: grid;
+  align-content: start;
+}
+.slip:not(.blank) {
+  cursor: pointer;
+}
+.icut {
+  position: absolute;
+  pointer-events: none;
+}
+.icut.v {
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 0.15mm dashed #b8b8b8;
+}
+.icut.h {
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 0.15mm dashed #b8b8b8;
+}
+.slip.hl::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  outline: 0.9mm solid rgba(79, 91, 213, 0.75);
+  outline-offset: -0.45mm;
+  pointer-events: none;
+}
+
+/* ---------- Miniature ---------- */
+.mini {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--mini-font);
+  font-size: var(--fs, 7pt);
+  line-height: 1.13;
+  color: #161616;
+  background: #fff;
+  border: 0.3mm solid var(--accent, #888);
+  border-radius: 1.1mm;
+  font-kerning: normal;
+  /* Métriques exactes (sans hinting) : même mise en page à l'écran, en mesure et à l'impression. */
+  text-rendering: geometricPrecision;
+}
+.mini-face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+}
+.mini-face > * {
+  flex: none;
+}
+.mini-face + .mini-face {
+  border-top: 0.3mm dashed var(--accent);
+}
+.mini-head {
+  padding: 0.3em 0.42em 0.26em;
+  background: var(--tintbg, var(--tint));
+  border-bottom: 0.2mm solid var(--accent);
+}
+.mini-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3em;
+  font-weight: 600;
+  font-size: 1.1em;
+  line-height: 1.06;
+}
+/* Les mots ne sont jamais coupés : un mot trop long déborde, la mesure le
+   détecte et le calibrage choisit une police plus petite. */
+.mini-name {
+  flex: 1 1 auto;
+}
+.mini-cost {
+  flex: none;
+  white-space: nowrap;
+}
+.mini-type {
+  margin-top: 0.14em;
+  font-size: 0.86em;
+  line-height: 1.1;
+}
+.mini-label {
+  display: inline-block;
+  margin-right: 0.35em;
+  padding: 0 0.4em;
+  border-radius: 0.7em;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.84em;
+  line-height: 1.32;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  vertical-align: 0.04em;
+}
+.mini-body {
+  display: flow-root;
+  flex: 1 0 auto;
+  padding: 0.3em 0.42em 0.26em;
+}
+.mini-body p {
+  margin: 0 0 0.24em;
+}
+.mini-body p:last-child {
+  margin-bottom: 0;
+}
+.mini-body p.bullet {
+  padding-left: 0.65em;
+  text-indent: -0.65em;
+}
+.rem {
+  font-style: italic;
+  color: #4a4a4a;
+}
+.loy {
+  display: inline-block;
+  margin-right: 0.28em;
+  padding: 0 0.3em;
+  border-radius: 0.25em;
+  background: #2b2b2b;
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.22;
+}
+.sym {
+  display: inline-block;
+  width: 0.92em;
+  height: 0.92em;
+  margin: 0 0.03em;
+  vertical-align: -0.12em;
+  object-fit: contain;
+}
+.syms {
+  white-space: nowrap;
+}
+.mini-cost .sym {
+  width: 0.86em;
+  height: 0.86em;
+  margin: 0 0 0 0.04em;
+}
+
+/* Force/endurance, loyauté, défense : en bas à droite. Un fantôme invisible
+   (.stat-space) réserve la place à la fin du texte pour éviter tout chevauchement. */
+.mini-stat,
+.stat-space {
+  padding: 0 0.34em;
+  border: 0.2mm solid var(--accent);
+  border-radius: 0.35em;
+  font-weight: 600;
+  line-height: 1.24;
+}
+.mini-stat {
+  position: absolute;
+  right: 0.32em;
+  bottom: 0.22em;
+  background: var(--tint);
+}
+.mini-stat.loyalty {
+  background: #2b2b2b;
+  border-color: #2b2b2b;
+  color: #fff;
+}
+.stat-space {
+  float: right;
+  margin-left: 0.35em;
+  visibility: hidden;
+}
+
+/* ---------- Illustrations ---------- */
+.mini-artbox {
+  display: none;
+}
+
+/* Encadré : l'illustration occupe la place laissée libre par le texte. */
+.art-top .mini-artbox {
+  display: block;
+  flex: 1 1 auto;
+  min-height: calc(var(--h, 30mm) * 0.2);
+  background: #d9d6cf var(--art, none) center 30% / cover no-repeat;
+  border-bottom: 0.2mm solid var(--accent);
+}
+.art-top .mini-face:first-child .mini-body {
+  flex-grow: 0;
+}
+
+/* Bandeau : l'illustration derrière le nom et le type. */
+.art-band .mini-face:first-child .mini-head {
+  padding-top: 0.6em;
+  padding-bottom: 0.38em;
+  background: linear-gradient(rgba(12, 12, 12, 0.62), rgba(12, 12, 12, 0.3)),
+    var(--art, none) center 30% / cover no-repeat, var(--accent);
+  color: #fff;
+  text-shadow: 0 0 0.25em rgba(0, 0, 0, 0.85);
+}
+.art-band .mini-face:first-child .mini-label {
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  text-shadow: none;
+}
+
+/* Fond : l'illustration estompée derrière tout le texte. */
+.art-bg {
+  background: linear-gradient(rgba(255, 255, 255, var(--veil)), rgba(255, 255, 255, var(--veil))),
+    var(--art, none) center / cover no-repeat, #fff;
+}
+.art-bg .mini-head {
+  background: color-mix(in srgb, var(--tint) 72%, transparent);
+}
+.art-bg .rem {
+  color: #333;
+}
+
+/* Cadre : l'illustration visible autour des zones de texte. */
+.art-frame {
+  background: var(--art, none) center / cover no-repeat, var(--accent);
+}
+.art-frame .mini-face {
+  gap: 0.6mm;
+  padding: 0.8mm;
+}
+.art-frame .mini-face + .mini-face {
+  border-top: none;
+  padding-top: 0;
+}
+.art-frame .mini-head {
+  border-bottom: none;
+  border-radius: 0.7mm;
+  background: color-mix(in srgb, var(--tint) 93%, transparent);
+}
+.art-frame .mini-body {
+  border-radius: 0.7mm;
+  background: rgba(255, 255, 255, 0.93);
+}
+.art-frame .mini-stat {
+  right: calc(0.8mm + 0.2em);
+  bottom: calc(0.8mm + 0.15em);
+}
+
+/* ---------- Zone de mesure (invisible) ---------- */
+#measure {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.mini-cell {
+  position: relative;
+}
+
+/* ---------- Impression ---------- */
+@media print {
+  html,
+  body {
+    height: auto !important;
+    background: #fff !important;
+  }
+  #sidebar,
+  .preview-bar,
+  .preview-empty,
+  #measure,
+  #toast,
+  .page-num {
+    display: none !important;
+  }
+  #app,
+  #preview,
+  .preview-scroll {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: none !important;
+  }
+  #pages {
+    display: block !important;
+    padding: 0 !important;
+  }
+  .page-wrap {
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    break-after: page;
+  }
+  .page-wrap:last-child {
+    break-after: auto;
+  }
+  .page {
+    position: relative;
+    transform: none;
+    box-shadow: none;
+  }
+  .slip.hl::after {
+    display: none;
+  }
+}

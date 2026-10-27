@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Copy Slips</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='17' height='23' rx='2.5' fill='%23c9cdf5' stroke='%234f5bd5' stroke-width='2'/%3E%3Crect x='12' y='3' width='17' height='23' rx='2.5' fill='%23fff' stroke='%234f5bd5' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/sheet.css">
+<style id="page-size">@page { size: 210mm 297mm; margin: 0; }</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <header class="side-head">
+      <div class="brand">
+        <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="17" height="23" rx="2.5" fill="#c9cdf5" stroke="#4f5bd5" stroke-width="2"/><rect x="12" y="3" width="17" height="23" rx="2.5" fill="#fff" stroke="#4f5bd5" stroke-width="2"/><path d="M16 10h9M16 14h9M16 18h6" stroke="#4f5bd5" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <div>
+          <div class="brand-name">Copy Slips</div>
+          <div class="brand-sub">Fiches de copie à glisser dans les sleeves</div>
+        </div>
+      </div>
+      <div class="deck-bar">
+        <select id="deck-select" aria-label="Deck"></select>
+        <button class="btn icon" id="btn-refresh" title="Recharger la liste depuis Archidekt (les réglages des cartes sont conservés)" hidden>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3M16 3.5v3.7h-3.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="btn icon" id="btn-delete" title="Supprimer ce deck" hidden>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2M6 6l.8 10h6.4L14 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="deck-meta" id="deck-meta" hidden>
+        <input id="deck-name" aria-label="Nom du deck" spellcheck="false">
+        <span id="save-status" class="save-status"></span>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" data-tab="cards" role="tab">Cartes <span id="tab-count" class="tab-count"></span></button>
+      <button class="tab" data-tab="settings" role="tab">Réglages</button>
+      <button class="tab" data-tab="import" role="tab">Importer</button>
+    </nav>
+
+    <!-- Onglet Cartes -->
+    <section class="tab-body" id="tab-cards" hidden>
+      <div class="list-tools">
+        <input type="search" id="card-search" placeholder="Filtrer les cartes…" spellcheck="false">
+        <div class="quick">
+          <span class="quick-label">Ajouter à la sélection :</span>
+          <button class="chip" data-quick="creature">Créatures</button>
+          <button class="chip" data-quick="spell">Éphémères &amp; rituels</button>
+          <button class="chip" data-quick="aura">Auras</button>
+          <button class="chip" data-quick="mutate">Mutation</button>
+          <button class="chip" data-quick="all">Tout</button>
+          <button class="chip ghost" data-quick="none">Tout désélectionner</button>
+        </div>
+        <label class="check small"><input type="checkbox" id="only-selected"> Afficher seulement la sélection</label>
+      </div>
+      <div id="card-list"></div>
+    </section>
+
+    <!-- Onglet Réglages -->
+    <section class="tab-body" id="tab-settings" hidden>
+      <form id="settings" class="settings" autocomplete="off">
+        <fieldset>
+          <legend>Texte</legend>
+          <label class="field"><span>Langue des cartes</span>
+            <select data-setting="lang"><option value="en">Anglais (Oracle, toujours à jour)</option><option value="fr">Français (texte imprimé le plus récent)</option></select>
+          </label>
+          <label class="field"><span>Police</span>
+            <select data-setting="font"><option value="barlow">Barlow (condensée, très lisible petit)</option><option value="crimson">Crimson (sérif, style carte)</option></select>
+          </label>
+          <div class="field-pair">
+            <label class="field"><span>Taille minimale</span><span class="unit"><input type="number" data-setting="minFont" min="4" max="12" step="0.5"> pt</span></label>
+            <label class="field"><span>Taille maximale</span><span class="unit"><input type="number" data-setting="maxFont" min="5" max="16" step="0.5"> pt</span></label>
+          </div>
+          <label class="field"><span>Texte de rappel (entre parenthèses)</span>
+            <select data-setting="reminder"><option value="hide">Masquer (gagne de la place)</option><option value="show">Afficher</option></select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Miniatures</legend>
+          <label class="field"><span>Copies max par rectangle (mode auto)</span><input type="number" data-setting="maxCopies" min="1" max="16" step="1"></label>
+          <p class="hint">En auto, chaque carte reçoit le plus de miniatures possible sans descendre sous la taille minimale.</p>
+          <label class="field"><span>Illustration par défaut</span>
+            <select data-setting="art">
+              <option value="none">Aucune</option>
+              <option value="top">Encadré (prend la place libre)</option>
+              <option value="band">Bandeau derrière le titre</option>
+              <option value="frame">Cadre autour du texte</option>
+              <option value="bg">Fond estompé</option>
+            </select>
+          </label>
+          <label class="field"><span>Intensité du fond estompé</span><input type="range" data-setting="artStrength" min="0.1" max="0.7" step="0.05"></label>
+          <label class="check"><input type="checkbox" data-setting="colorFrames"> Bordures aux couleurs de la carte</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Rectangles</legend>
+          <div class="field-pair">
+            <label class="field"><span>Largeur</span><span class="unit"><input type="number" data-setting="slipW" min="40" max="70" step="0.5"> mm</span></label>
+            <label class="field"><span>Hauteur</span><span class="unit"><input type="number" data-setting="slipH" min="60" max="95" step="0.5"> mm</span></label>
+          </div>
+          <p class="hint">Carte standard : 63 × 88 mm. Réduisez d'un demi-millimètre si vos sleeves sont très ajustées.</p>
+          <label class="check"><input type="checkbox" data-setting="innerCuts"> Pointillés entre les miniatures</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Rectangles vierges</legend>
+          <label class="field"><span>Nombre</span>
+            <select data-setting="blanksMode">
+              <option value="auto">Compléter le deck (une par carte non imprimée)</option>
+              <option value="fixed">Nombre fixe</option>
+              <option value="none">Aucun</option>
+            </select>
+          </label>
+          <label class="field" id="blanks-count-field"><span>Nombre de rectangles vierges</span><input type="number" data-setting="blanksCount" min="0" max="500" step="1"></label>
+          <label class="check"><input type="checkbox" data-setting="fillPage"> Compléter la dernière page avec des vierges</label>
+          <p class="hint">Glissés derrière les cartes non copiées, ils rendent toutes les cartes identiques au toucher.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Page</legend>
+          <label class="field"><span>Format du papier</span>
+            <select data-setting="paper"><option value="a4">A4 (210 × 297 mm)</option><option value="letter">US Letter</option></select>
+          </label>
+          <label class="field"><span>Espace entre rectangles</span><span class="unit"><input type="number" data-setting="slipGap" min="0" max="6" step="0.5"> mm</span></label>
+          <p class="hint">0 mm : les rectangles se touchent, une seule coupe suffit entre deux voisins.</p>
+          <label class="check"><input type="checkbox" data-setting="slipBorders"> Contours fins des rectangles</label>
+          <label class="check"><input type="checkbox" data-setting="cropMarks"> Traits de coupe dans les marges</label>
+        </fieldset>
+
+        <button type="button" class="btn ghost" id="btn-reset-settings">Revenir aux réglages par défaut</button>
+      </form>
+    </section>
+
+    <!-- Onglet Importer -->
+    <section class="tab-body" id="tab-import" hidden>
+      <div class="import">
+        <h3>Depuis Archidekt</h3>
+        <div class="row-input">
+          <input id="arch-url" placeholder="https://archidekt.com/decks/123456/…" spellcheck="false">
+          <button class="btn primary" id="btn-arch">Importer</button>
+        </div>
+        <p class="hint">Le deck doit être public ou non répertorié. Les catégories exclues du deck (Maybeboard, Sideboard…) sont ignorées.</p>
+
+        <h3>Depuis une liste texte</h3>
+        <input id="text-name" placeholder="Nom du deck" spellcheck="false">
+        <textarea id="text-list" rows="12" spellcheck="false" placeholder="1 Sol Ring&#10;1 Counterspell (MH2) 267&#10;4x Lightning Bolt&#10;&#10;Sideboard&#10;1 Pyroblast"></textarea>
+        <label class="check small" id="merge-field" hidden><input type="checkbox" id="text-merge"> Remplacer la liste du deck ouvert (garde les réglages des cartes)</label>
+        <button class="btn primary" id="btn-text">Importer la liste</button>
+        <p class="hint">Formats acceptés : exports Archidekt, Moxfield, MTG Arena, MTGO, ou un nom de carte par ligne. Les sections Sideboard et Maybeboard sont ignorées.</p>
+      </div>
+    </section>
+  </aside>
+
+  <main id="preview">
+    <div class="preview-bar">
+      <div class="zoom">
+        <button class="btn icon" data-zoom="-" title="Dézoomer">−</button>
+        <input type="range" id="zoom" min="0.2" max="1.6" step="0.05" aria-label="Zoom">
+        <button class="btn icon" data-zoom="+" title="Zoomer">+</button>
+        <button class="btn ghost small" data-zoom="fit">Ajuster</button>
+      </div>
+      <div id="stats" class="stats"></div>
+      <details class="print-help">
+        <summary title="Conseils d'impression">?</summary>
+        <div class="print-help-body">
+          <strong>Pour un PDF ou une impression à la bonne taille :</strong>
+          <ol>
+            <li>Utilisez de préférence Chrome, Edge ou Chromium.</li>
+            <li>Destination : « Enregistrer au format PDF » (ou votre imprimante).</li>
+            <li>Échelle : <b>100 %</b> (taille réelle), jamais « Ajuster à la page ».</li>
+            <li>Marges : « Aucune » ou « Par défaut » (la page gère déjà ses marges).</li>
+          </ol>
+          Imprimez une page test et vérifiez qu'un rectangle mesure bien la taille réglée.
+        </div>
+      </details>
+      <button class="btn primary" id="btn-print">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 7V3h9v4M5.5 14H3.5V8.5a1.5 1.5 0 0 1 1.5-1.5h10a1.5 1.5 0 0 1 1.5 1.5V14h-2M6 11.5h8V17H6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Imprimer / PDF
+      </button>
+    </div>
+    <div class="preview-scroll" id="preview-scroll">
+      <div class="preview-empty" id="preview-empty">
+        <svg viewBox="0 0 120 90" aria-hidden="true"><rect x="14" y="10" width="44" height="62" rx="4" fill="#fff" stroke="#b9b5ab" stroke-width="2"/><rect x="62" y="16" width="44" height="62" rx="4" fill="#fff" stroke="#b9b5ab" stroke-width="2" stroke-dasharray="4 3"/><path d="M22 22h28M22 30h20M22 38h24" stroke="#cfcbc2" stroke-width="3" stroke-linecap="round"/></svg>
+        <h2>Aucun deck ouvert</h2>
+        <p>Importez un deck depuis Archidekt ou une liste texte, puis cochez les cartes que vous copiez.</p>
+        <button class="btn primary" data-goto="import">Importer un deck</button>
+      </div>
+      <div id="pages"></div>
+    </div>
+  </main>
+</div>
+
+<div id="measure" aria-hidden="true"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

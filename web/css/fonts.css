@@ -1,0 +1,39 @@
+/* Polices libres (SIL Open Font License, voir web/fonts/OFL-*.txt).
+   Elles sont fournies avec l'outil pour que le texte soit calibré
+   à l'identique sous Windows et Linux. */
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  src: url("../fonts/BarlowSemiCondensed-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  src: url("../fonts/BarlowSemiCondensed-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  src: url("../fonts/BarlowSemiCondensed-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Barlow Semi Condensed";
+  src: url("../fonts/BarlowSemiCondensed-SemiBoldItalic.ttf") format("truetype");
+  font-weight: 600;
+  font-style: italic;
+}
+@font-face {
+  font-family: "Crimson Pro";
+  src: url("../fonts/CrimsonPro.ttf") format("truetype");
+  font-weight: 200 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Crimson Pro";
+  src: url("../fonts/CrimsonPro-Italic.ttf") format("truetype");
+  font-weight: 200 900;
+  font-style: italic;
+}
