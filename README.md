@@ -1,81 +1,156 @@
 # Copy Slips
 
-Imprime des **fiches de copie** pour Magic: The Gathering : un rectangle de la
-taille d'une carte, rempli de miniatures du texte d'une carte (nom, coût, type
-avec la mention « Jeton copie », texte, force/endurance). On le glisse dans la
-sleeve, derrière la carte : quand la carte est copiée, la représentation exacte
-de la copie est déjà sous la main.
+**Print-and-sleeve cheat sheets for all the copies your Magic deck makes.**
 
-## Lancer l'outil
+![Copy Slips: the card list and its settings on the left, a live preview of the pages to print on the right](docs/copy_slips.png)
 
-Seul **Python 3.9 ou plus récent** est nécessaire, sans aucun paquet à installer.
+## Why?
 
-- **Windows** : double-cliquez sur `lancer.bat`. Sinon, ouvrez un terminal dans ce dossier et tapez `py app.py`.
-- **Linux** : `./lancer.sh` ou `python3 app.py`.
+Some decks just love copying stuff. I've got two of them. One copies mutated
+creatures and auras stuck on creatures. The other copies instants, sorceries and
+abilities, and messes with the stack a lot: copy this, counter that, bounce the
+other thing back to hand…
 
-Le navigateur s'ouvre sur l'outil (adresse `http://127.0.0.1:8765/`). Laissez
-la fenêtre du terminal ouverte pendant l'utilisation et fermez-la pour arrêter.
-Une connexion internet est nécessaire pour récupérer les cartes. Elles sont
-ensuite gardées en cache.
+In thoses edge cases, generic copy tokens don't cut it, at least for me. They don't tell you *what* got copied, or which
+abilities a copy of a five-card mutate pile actually has. In my experience, a few turns in, and nobody at
+the table knows what's going on anymore.
 
-## Utilisation
+Copy Slips tries to help in that regard. The idea is to slip a few miniature copies of each card you may copy directly in their sleeves, in small text-only versions of that card: name, cost, type line with a **COPY
+TOKEN** tag, and rules text. The slip lives in the card's sleeve, right behind it.
+When the card gets copied, the exact copy is already at hand.
 
-1. **Importer** : collez le lien d'un deck Archidekt (public ou non répertorié),
-   ou une liste texte (exports Archidekt, Moxfield, MTG Arena, MTGO…).
-2. **Cartes** : cochez les cartes que vous copiez. Les boutons « Créatures »,
-   « Éphémères & rituels », « Auras » et « Mutation » ajoutent des groupes entiers.
-   Cliquez sur une carte pour régler :
-   - le **nombre de copies par rectangle**. En « Auto », l'outil met le plus de
-     miniatures possible sans passer sous la taille de police minimale. La liste
-     déroulante indique la police obtenue pour chaque nombre ;
-   - le **nombre de rectangles** à imprimer (par défaut, la quantité dans le deck) ;
-   - la **face** des cartes double face, split ou aventure (une seule ou toutes) ;
-   - l'**illustration** : encadré (prend la place libre), bandeau derrière le titre,
-     cadre autour du texte, ou fond estompé ;
-   - la **copie de capacité** : cochez une ou plusieurs capacités pour n'imprimer
-     qu'elles, avec la mention « Copie de capacité ».
-3. **Réglages** : langue (anglais Oracle ou français), police, tailles minimale
-   et maximale, texte de rappel, taille des rectangles, rectangles vierges, papier.
-4. **Imprimer / PDF** : voir ci-dessous.
+## What it does
 
-Tout est enregistré automatiquement, deck par deck (sélection et réglages). Le
-bouton ↻ recharge un deck Archidekt modifié en conservant vos réglages. Un clic
-sur un rectangle de l'aperçu ouvre la carte correspondante.
+- Imports your deck from an **Archidekt** link or a plain **text list** (Moxfield,
+  MTG Arena, MTGO exports all work).
+- Prints the card text in **English (Oracle)** or **French**, with full-color mana
+  symbols.
+- Fits as many copies as possible on each slip without going below a minimum font
+  size you choose.
+- Lets you tweak each card:
+  - how many copies per slip;
+  - which face of a double-faced card;
+  - **ability copies**, to print just the abilities you pick;
+  - card art, in one of four styles, always credited to the artist.
+- Labels each mini **Copy token**, **Copy** or **Ability copy**, depending on what
+  got copied.
+- Adds **blank slips** for the cards you don't copy, so nobody can tell your cards
+  apart by touch.
+- Shows a **live preview** that matches the printout exactly. You export to PDF
+  straight from your browser, with crop marks, 9 slips per A4 page.
+- Saves each deck and its settings automatically.
 
-### Rectangles vierges
+> **Heads-up:** the interface is in French for now. The cards themselves can be
+> printed in English.
 
-Pour que les cartes copiées ne se distinguent pas au toucher, l'outil ajoute
-par défaut un rectangle vierge pour chaque carte du deck non imprimée.
-Glissez-les derrière toutes les autres cartes. Vous pouvez aussi choisir un
-nombre fixe, ou compléter la dernière page.
+## Getting started
 
-## Impression
+All you need is **Python 3.9 or newer**. There's nothing else to install: no pip,
+no npm, no build step.
 
-L'aperçu est exactement ce qui sera imprimé. Cliquez sur **Imprimer / PDF**, puis :
+1. Grab the project: **Code → Download ZIP** on GitHub (then unzip it), or `git clone` it.
+2. Launch it:
+   - **Windows**: double-click `lancer.bat`;
+   - **Linux / macOS**: run `./lancer.sh` (or `python3 app.py`).
+3. Your browser opens on `http://127.0.0.1:8765/`. Keep the terminal window open
+   while you use the tool, and close it when you're done.
 
-- utilisez de préférence **Chrome, Edge ou Chromium** ;
-- choisissez la destination « Enregistrer au format PDF » ou votre imprimante ;
-- réglez l'échelle sur **100 % / taille réelle**, jamais « Ajuster à la page » ;
-- laissez les marges sur « Aucune » ou « Par défaut ».
+You need an internet connection to fetch the cards. They're cached afterwards.
 
-Faites une page de test et mesurez un rectangle à la règle (63 × 88 mm par défaut).
-Les rectangles d'une page se touchent : découpez le long des traits de coupe
-dans les marges, au massicot ou au cutter et à la règle. Les pointillés
-séparent les miniatures à l'intérieur d'un rectangle.
+I use it on Linux (Ubuntu). Windows and macOS should work too. If they don't,
+please open an issue!
 
-Un papier fin (80 g/m²) se glisse plus facilement dans une sleeve déjà occupée.
+## How to use it
 
-## Fichiers
+The tool has three tabs: **Cartes** (cards), **Réglages** (settings) and
+**Importer** (import).
 
-- `app.py` : serveur local (Python, bibliothèque standard uniquement).
-- `web/` : interface (HTML, CSS, JavaScript sans compilation).
-- `data/decks/` : decks sauvegardés (JSON).
-- `data/cache/` : données et images Scryfall. Vous pouvez supprimer ce dossier
-  sans risque : il se reconstruit tout seul.
+1. **Import a deck** in the *Importer* tab. Paste an Archidekt link (the deck must
+   be public or unlisted) or a text list. Sideboard and maybeboard are skipped.
+2. **Pick the cards you copy** in the *Cartes* tab by ticking them. The shortcut
+   buttons add whole groups at once: creatures (*Créatures*), instants & sorceries
+   (*Éphémères & rituels*), *Auras* and mutate cards (*Mutation*).
+3. **Tweak a card** by clicking it:
+   - **copies per slip**: *Auto* fits as many as it can. The dropdown shows the font
+     size you'd get for each count;
+   - **number of slips**: the deck quantity by default;
+   - **face**: one face or all of them, for double-faced, split and adventure cards;
+   - **art style**: art box, title banner, frame around the text, or faded background;
+   - **ability copy**: tick one or more abilities to print only those.
+4. **Adjust the settings** in the *Réglages* tab: language, font, min/max font
+   size, reminder text, slip size, blank slips, paper size.
+5. **Print** with the **Imprimer / PDF** button.
 
-## Crédits
+Everything saves automatically, per deck. Changed your deck on Archidekt? The ↻
+button reloads it and keeps your settings. Click any slip in the preview to jump
+to that card.
 
-Données et images des cartes : [Scryfall](https://scryfall.com). Magic: The
-Gathering et ses illustrations sont la propriété de Wizards of the Coast. Usage
-personnel uniquement.
-Polices Barlow Semi Condensed et Crimson Pro : SIL Open Font License (voir `web/fonts/`).
+### Blank slips
+
+A slip makes a card feel slightly different in its sleeve. To keep things fair,
+Copy Slips adds one blank slip for each card in the deck that doesn't get a printed
+slip. Put them behind every other card and your whole deck feels the same. You can
+also print a fixed number of blanks, or just fill up the last page.
+
+## Printing and cutting
+
+What you see in the preview is exactly what gets printed. Hit **Imprimer / PDF**,
+then in the print dialog:
+
+- use a Chromium-based browser if you can (Chrome, Edge, Brave, Chromium…);
+- pick "Save as PDF" or your printer;
+- set the scale to **100% / actual size**, never "fit to page";
+- leave margins on "None" or "Default".
+
+Print a test page first and check that a slip is 63 × 88 mm (the default size).
+Slips touch each other, so one cut separates two neighbors. Follow the crop marks
+in the margins with a paper trimmer, or a craft knife and a ruler. The dotted lines
+inside a slip separate the minis.
+
+Thin paper (80 gsm) slides into a sleeve more easily when there's already a card in it.
+
+## This is not a proxy tool
+
+The minis are text only, labeled as copies, and they sit behind the real card. You
+need to own the card to use them. Think of them as fancy tokens, not proxies.
+
+Copy Slips is made for casual games with friends. Taking it to a tournament? Ask
+the organizer first: extra stuff in your sleeves might not fly.
+
+## Privacy
+
+Everything runs on your computer. The local server only talks to Archidekt (to
+read your deck) and Scryfall (card data and images). It follows Scryfall's API
+rules: it identifies itself, sends at most 10 requests per second, and caches
+everything locally.
+
+Your decks and the cache live in the `data/` folder, which is not tracked by git.
+You can delete `data/cache/` anytime: it rebuilds itself.
+
+## Project structure
+
+| File | What it does |
+| --- | --- |
+| `app.py` | Local server: Archidekt and Scryfall relay, cache, deck saving. Python standard library only |
+| `web/index.html`, `web/css/` | The interface and the printable sheets |
+| `web/js/main.js` | App state, card list, settings, import, printing |
+| `web/js/mini.js` | Builds one mini: text, mana symbols, colors, art |
+| `web/js/fit.js` | Picks the grid and the biggest font size that fits |
+| `web/js/pages.js` | Lays slips out on pages, draws crop marks |
+| `web/js/parse.js` | Reads text deck lists |
+
+There's no build step: edit a file, reload the page.
+
+## Credits and legal stuff
+
+- Card data, images and mana symbols come from [Scryfall](https://scryfall.com).
+  Copy Slips is not affiliated with or endorsed by Scryfall.
+- Card art shown on the minis is credited to its artist.
+- Fonts: Barlow Semi Condensed and Crimson Pro, under the SIL Open Font License
+  (see `web/fonts/`).
+
+Required by Wizards of the Coast's [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy):
+
+> Copy Slips is unofficial Fan Content permitted under the Fan Content Policy. Not
+> approved/endorsed by Wizards. Portions of the materials used are property of Wizards
+> of the Coast. ©Wizards of the Coast LLC.
