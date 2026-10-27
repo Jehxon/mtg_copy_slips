@@ -186,11 +186,14 @@ def trim_card(raw: dict) -> dict:
     card.update({k: raw.get(k) for k in FACE_FIELDS})
     card["colors"] = raw.get("colors")
     card["art"] = _art(raw) or (_art(faces[0]) if faces else None)
+    # Scryfall demande de créditer l'artiste partout où une illustration (art_crop) est affichée.
+    card["artist"] = raw.get("artist") or (faces[0].get("artist") if faces else None)
     card["faces"] = []
     for f in faces:
         face = {k: f.get(k) for k in FACE_FIELDS}
         face["colors"] = f.get("colors") if f.get("colors") is not None else raw.get("colors")
         face["art"] = _art(f) or card["art"]
+        face["artist"] = f.get("artist") or card["artist"]
         card["faces"].append(face)
     if card["colors"] is None:
         seen = {c for f in card["faces"] for c in (f.get("colors") or [])}
@@ -246,7 +249,9 @@ class CardStore:
         if not card_id or not UUID_RE.match(card_id):
             return None
         path = self.dir / f"{card_id}.json"
-        return read_json(path) if is_fresh(path) else None
+        card = read_json(path) if is_fresh(path) else None
+        # Cache antérieur à l'ajout du crédit d'artiste : on recharge la carte.
+        return card if card and "artist" in card else None
 
     def _remember(self, cards: list) -> None:
         for card in cards:

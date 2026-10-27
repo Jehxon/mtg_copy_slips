@@ -7,8 +7,8 @@ export function setSymbols(map) {
 }
 
 const LABELS = {
-  en: { token: 'Copy token', copy: 'Copy', ability: 'Ability copy' },
-  fr: { token: 'Jeton copie', copy: 'Copie', ability: 'Copie de capacité' },
+  en: { token: 'Copy token', copy: 'Copy', ability: 'Ability copy', illus: 'Illus.' },
+  fr: { token: 'Jeton copie', copy: 'Copie', ability: 'Copie de capacité', illus: 'Ill.' },
 };
 
 // accent : bordure et pastilles ; tint : fond de l'en-tête.
@@ -134,6 +134,7 @@ export function faceData(card, i, lang) {
     defense: f.defense,
     colors: f.colors || card.colors || [],
     art: f.art || card.art,
+    artist: f.artist || card.artist,
   };
 }
 
@@ -222,6 +223,7 @@ export function buildContent(card, opts, S) {
     enType: first.enType,
     art: first.art ? art : 'none',
     artUrl: first.art,
+    artist: first.artist,
     lang,
     colorFrames: S.colorFrames,
   };
@@ -268,12 +270,18 @@ export function miniHTML(ct, withArt = true) {
     if (i === 0 && ct.art === 'top') h += '<div class="mini-artbox"></div>';
 
     const stat = ability ? '' : statText(f);
-    const paras = f.paras.length || !stat ? f.paras : [{ html: '', bullet: false }];
+    const space = stat ? `<span class="stat-space">${escapeHTML(stat)}</span>` : '';
+    // Crédit de l'illustration (exigé par Scryfall), en dernière ligne comme sur les vraies cartes.
+    const credit = i === 0 && ct.art !== 'none' && ct.artist
+      ? `${LABELS[ct.lang]?.illus || LABELS.en.illus} ${ct.artist} · © WotC`
+      : '';
+    const paras = f.paras.length || !stat || credit ? f.paras : [{ html: '', bullet: false }];
     h += '<div class="mini-body">';
     paras.forEach((p, j) => {
-      const space = stat && j === paras.length - 1 ? `<span class="stat-space">${escapeHTML(stat)}</span>` : '';
-      h += `<p${p.bullet ? ' class="bullet"' : ''}>${p.html}${space}</p>`;
+      const end = !credit && j === paras.length - 1 ? space : '';
+      h += `<p${p.bullet ? ' class="bullet"' : ''}>${p.html}${end}</p>`;
     });
+    if (credit) h += `<p class="mini-credit">${escapeHTML(credit)}${space}</p>`;
     h += '</div>';
     if (stat) h += `<div class="mini-stat${f.loyalty && !f.power ? ' loyalty' : ''}">${escapeHTML(stat)}</div>`;
     h += '</div>';
