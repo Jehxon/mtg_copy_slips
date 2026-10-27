@@ -139,10 +139,9 @@ There's no build step: edit a file, reload the page.
 
 ## License
 
-Copy Slips is released under the [BSD Zero Clause License](LICENSE) (0BSD). In
-plain words: do whatever you want with it. Use it, change it, sell it, put it in
-closed-source software. No strings attached, not even credit (though a shout-out
-is always nice).
+Copy Slips is released under the [MIT License](LICENSE). In plain words: do
+whatever you want with it. Use it, change it, sell it, put it in closed-source
+software. Just keep the copyright notice and the license text with any copy.
 
 The fonts in `web/fonts/` keep their own license (SIL Open Font License).
 
