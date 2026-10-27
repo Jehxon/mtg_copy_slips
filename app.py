@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Copy Slips : serveur local de l'outil.
+"""Copy Slips: the tool's local server.
 
-Utilise uniquement la bibliothèque standard de Python (3.9+).
-Lancement :  python app.py        options : --port 8765  --no-browser
+Uses only the Python standard library (3.9+).
+Run:  python app.py        options: --port 8765  --no-browser
 
-Rôle du serveur :
-  - servir l'interface web (dossier web/) ;
-  - relayer les appels à Archidekt et Scryfall (en respectant leurs limites) ;
-  - mettre en cache les données de cartes, traductions et images (data/cache/) ;
-  - sauvegarder les decks et leurs réglages (data/decks/).
+What the server does:
+  - serves the web interface (web/ folder);
+  - relays calls to Archidekt and Scryfall (respecting their limits);
+  - caches card data, translations and images (data/cache/);
+  - saves decks and their settings (data/decks/).
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ DATA_DIR = ROOT / "data"
 CACHE_DIR = DATA_DIR / "cache"
 DECKS_DIR = DATA_DIR / "decks"
 
-USER_AGENT = "CopySlips/1.0 (outil local d'impression de fiches de copie MTG)"
+USER_AGENT = "CopySlips/1.0 (local tool printing MTG copy slips)"
 SCRYFALL = "https://api.scryfall.com"
 ARCHIDEKT = "https://archidekt.com/api/decks/{id}/"
 ASSET_HOSTS = ("scryfall.io", "scryfall.com")
@@ -68,7 +68,7 @@ class ApiError(Exception):
         self.message = message
 
 
-# --------------------------------------------------------------------------- fichiers
+# --------------------------------------------------------------------------- files
 
 def read_json(path: Path, default=None):
     try:
@@ -83,8 +83,8 @@ def _atomic_write(path: Path, data: bytes) -> None:
     tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
     with open(tmp, "wb") as f:
         f.write(data)
-    # Sous Windows, le remplacement échoue si le fichier est ouvert en lecture
-    # au même instant par une autre requête : on réessaie brièvement.
+    # On Windows, replacing fails if another request has the file open for
+    # reading at that very moment: retry briefly.
     for attempt in range(10):
         try:
             os.replace(tmp, path)
@@ -116,7 +116,7 @@ def is_fresh(path: Path, days: float = CACHE_DAYS) -> bool:
         return False
 
 
-# --------------------------------------------------------------------------- réseau
+# --------------------------------------------------------------------------- network
 
 def http_request(url: str, payload=None, accept: str = "application/json", timeout: float = 30) -> bytes:
     headers = {"User-Agent": USER_AGENT, "Accept": accept}
@@ -130,7 +130,7 @@ def http_request(url: str, payload=None, accept: str = "application/json", timeo
 
 
 class Scryfall:
-    """Client Scryfall qui respecte la limite d'environ 10 requêtes par seconde."""
+    """Scryfall client that stays under the ~10 requests per second limit."""
 
     MIN_INTERVAL = 0.11
 
@@ -147,7 +147,7 @@ class Scryfall:
             time.sleep(wait)
 
     def call(self, path: str, payload=None):
-        """Renvoie le JSON décodé, ou None si Scryfall répond 404."""
+        """Returns the decoded JSON, or None if Scryfall answers 404."""
         url = SCRYFALL + path
         for attempt in range(3):
             self._throttle()
@@ -159,13 +159,13 @@ class Scryfall:
                 if e.code == 429 and attempt < 2:
                     time.sleep(1 + attempt)
                     continue
-                raise ApiError(502, f"Scryfall a répondu avec l'erreur {e.code}.")
+                raise ApiError(502, f"Scryfall answered with error {e.code}.")
             except (urllib.error.URLError, TimeoutError, OSError) as e:
-                raise ApiError(502, f"Scryfall est injoignable ({e}). Vérifiez la connexion internet.")
-        raise ApiError(502, "Scryfall est surchargé, réessayez dans un instant.")
+                raise ApiError(502, f"Can't reach Scryfall ({e}). Check your internet connection.")
+        raise ApiError(502, "Scryfall is overloaded, try again in a moment.")
 
 
-# --------------------------------------------------------------------------- cartes
+# --------------------------------------------------------------------------- cards
 
 FACE_FIELDS = ("name", "mana_cost", "type_line", "oracle_text", "power", "toughness", "loyalty", "defense")
 WUBRG = "WUBRG"
@@ -180,13 +180,13 @@ def _art(obj: dict):
 
 
 def trim_card(raw: dict) -> dict:
-    """Ne garde d'une carte Scryfall que ce dont l'outil a besoin."""
+    """Keeps only what the tool needs from a Scryfall card."""
     faces = raw.get("card_faces") or []
     card = {k: raw.get(k) for k in ("id", "oracle_id", "name", "layout", "set", "collector_number", "cmc", "color_identity")}
     card.update({k: raw.get(k) for k in FACE_FIELDS})
     card["colors"] = raw.get("colors")
     card["art"] = _art(raw) or (_art(faces[0]) if faces else None)
-    # Scryfall demande de créditer l'artiste partout où une illustration (art_crop) est affichée.
+    # Scryfall asks to credit the artist wherever an art crop is displayed.
     card["artist"] = raw.get("artist") or (faces[0].get("artist") if faces else None)
     card["faces"] = []
     for f in faces:
@@ -216,7 +216,7 @@ def _scryfall_identifier(ident: dict) -> dict:
         return {"id": ident["id"]}
     if ident.get("set") and ident.get("collector_number"):
         return {"set": ident["set"], "collector_number": ident["collector_number"]}
-    # Scryfall ne reconnaît pas « Fire // Ice » mais trouve « Fire ».
+    # Scryfall doesn't recognize "Fire // Ice" but finds "Fire".
     name = ident["name"].split(" // ")[0]
     if ident.get("set"):
         return {"name": name, "set": ident["set"]}
@@ -231,8 +231,8 @@ def _matches(ident: dict, card: dict) -> bool:
     if ident.get("set") and ident.get("collector_number"):
         if card.get("collector_number") != ident["collector_number"]:
             return False
-        # Une édition/numéro erronés désignent une autre carte : on refuse,
-        # le second essai se fera par le nom seul.
+        # A wrong set/number points to another card: reject it, the second
+        # attempt will use the name alone.
         return not ident.get("name") or norm_name(ident["name"]) in card_names(card)
     return norm_name(ident.get("name", "")) in card_names(card)
 
@@ -250,7 +250,7 @@ class CardStore:
             return None
         path = self.dir / f"{card_id}.json"
         card = read_json(path) if is_fresh(path) else None
-        # Cache antérieur à l'ajout du crédit d'artiste : on recharge la carte.
+        # Cached before artist credits existed: fetch the card again.
         return card if card and "artist" in card else None
 
     def _remember(self, cards: list) -> None:
@@ -289,7 +289,7 @@ class CardStore:
                 pending[i] = ident
         if pending:
             self._fetch(pending, results)
-            # Second essai par le nom seul (impression inconnue, ID obsolète…).
+            # Second attempt by name alone (unknown printing, outdated ID…).
             retry = {i: {"name": ident["name"]} for i, ident in pending.items()
                      if results[i] is None and ident.get("name") and (ident.get("id") or ident.get("set"))}
             if retry:
@@ -313,14 +313,14 @@ _FR_WORDS = re.compile(r"\b(le|la|les|vous|votre|de|des|du|un|une|cette|chaque|c
 
 
 def _french_text(text):
-    """Certaines impressions « françaises » récentes ont leur texte en anglais : on les écarte."""
+    """Some recent "French" printings actually have English text: skip them."""
     if text and len(_FR_WORDS.findall(text)) >= len(_EN_WORDS.findall(text)):
         return text
     return None
 
 
 def build_french(prints: list) -> dict:
-    """Assemble nom, type et texte français à partir des impressions (la plus récente d'abord)."""
+    """Builds the French name, type line and text from the printings (newest first)."""
     if not prints:
         return {}
     fr = {
@@ -343,11 +343,11 @@ def _oracle_id(card: dict):
 
 
 class FrenchStore:
-    BATCH = 20  # cartes par recherche Scryfall
+    BATCH = 20  # cards per Scryfall search
 
     def __init__(self, scry: Scryfall):
         self.scry = scry
-        self.dir = CACHE_DIR / "fr-v2"  # v2 : textes anglais écartés (l'ancien cache est ignoré)
+        self.dir = CACHE_DIR / "fr-v2"  # v2: English texts are skipped (the old cache is ignored)
 
     def get_many(self, oracle_ids: list) -> dict:
         out = {}
@@ -362,7 +362,7 @@ class FrenchStore:
             else:
                 missing.append(oid)
 
-        # Une seule recherche pour plusieurs cartes : « lang:fr (oracleid:A or oracleid:B …) ».
+        # One search for several cards: "lang:fr (oracleid:A or oracleid:B …)".
         for start in range(0, len(missing), self.BATCH):
             chunk = missing[start:start + self.BATCH]
             query = urllib.parse.urlencode({
@@ -371,7 +371,7 @@ class FrenchStore:
             })
             prints = []
             path = f"/cards/search?{query}"
-            for _ in range(10):  # pagination (175 impressions par page)
+            for _ in range(10):  # pagination (175 printings per page)
                 resp = self.scry.call(path) or {}
                 prints.extend(resp.get("data", []))
                 if not resp.get("has_more") or not resp.get("next_page"):
@@ -399,17 +399,17 @@ def get_asset(url: str):
     parsed = urllib.parse.urlparse(url)
     host = parsed.hostname or ""
     if parsed.scheme != "https" or not any(host == h or host.endswith("." + h) for h in ASSET_HOSTS):
-        raise ApiError(400, "Adresse d'image non autorisée.")
+        raise ApiError(400, "Image address not allowed.")
     ext = os.path.splitext(parsed.path)[1].lower()
     if ext not in (".jpg", ".jpeg", ".png", ".svg"):
-        raise ApiError(400, "Type d'image non pris en charge.")
+        raise ApiError(400, "Unsupported image type.")
     path = CACHE_DIR / "assets" / (hashlib.sha1(url.encode("utf-8")).hexdigest() + ext)
-    with lock_for(path.name):  # une seule requête si la même image est demandée plusieurs fois
+    with lock_for(path.name):  # a single download when the same image is requested several times
         if not path.exists():
             try:
                 data = http_request(url, accept="*/*", timeout=60)
             except (urllib.error.URLError, TimeoutError, OSError) as e:
-                raise ApiError(502, f"Image indisponible ({e}).")
+                raise ApiError(502, f"Image unavailable ({e}).")
             _atomic_write(path, data)
         return path, MIME[ext], path.read_bytes()
 
@@ -420,16 +420,16 @@ def get_archidekt(ref: str) -> dict:
     ref = (ref or "").strip()
     m = re.search(r"archidekt\.com/(?:api/)?decks/(\d+)", ref) or re.fullmatch(r"(\d+)", ref)
     if not m:
-        raise ApiError(400, "Lien Archidekt non reconnu (attendu : https://archidekt.com/decks/123456/…).")
+        raise ApiError(400, "Unrecognized Archidekt link (expected: https://archidekt.com/decks/123456/…).")
     deck_id = m.group(1)
     try:
         raw = json.loads(http_request(ARCHIDEKT.format(id=deck_id)))
     except urllib.error.HTTPError as e:
         if e.code in (403, 404):
-            raise ApiError(404, "Deck Archidekt introuvable. Vérifiez qu'il est public ou non répertorié.")
-        raise ApiError(502, f"Archidekt a répondu avec l'erreur {e.code}.")
+            raise ApiError(404, "Archidekt deck not found. Make sure it's public or unlisted.")
+        raise ApiError(502, f"Archidekt answered with error {e.code}.")
     except (urllib.error.URLError, TimeoutError, OSError) as e:
-        raise ApiError(502, f"Archidekt est injoignable ({e}).")
+        raise ApiError(502, f"Can't reach Archidekt ({e}).")
 
     excluded = {c.get("name") for c in raw.get("categories") or [] if c.get("includedInDeck") is False}
     cards = []
@@ -452,11 +452,11 @@ def get_archidekt(ref: str) -> dict:
     return {"id": int(deck_id), "name": raw.get("name") or f"Deck {deck_id}", "cards": cards}
 
 
-# --------------------------------------------------------------------------- decks sauvegardés
+# --------------------------------------------------------------------------- saved decks
 
 def deck_path(slug: str) -> Path:
     if not SLUG_RE.match(slug or ""):
-        raise ApiError(400, "Nom de deck invalide.")
+        raise ApiError(400, "Invalid deck name.")
     return DECKS_DIR / f"{slug}.json"
 
 
@@ -471,7 +471,7 @@ def list_decks() -> list:
     return decks
 
 
-# --------------------------------------------------------------------------- serveur HTTP
+# --------------------------------------------------------------------------- HTTP server
 
 SCRY = Scryfall()
 CARDS = CardStore(SCRY)
@@ -481,7 +481,7 @@ FRENCH = FrenchStore(SCRY)
 class Handler(BaseHTTPRequestHandler):
     server_version = "CopySlips/1.0"
 
-    def log_message(self, fmt, *args):  # console silencieuse
+    def log_message(self, fmt, *args):  # keep the console quiet
         pass
 
     def do_GET(self):
@@ -496,7 +496,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         self._dispatch("DELETE")
 
-    # -- réponses
+    # -- responses
     def _send(self, status: int, body: bytes, ctype: str, cache: str = "no-cache") -> None:
         try:
             self.send_response(status)
@@ -515,14 +515,14 @@ class Handler(BaseHTTPRequestHandler):
     def _body(self):
         length = int(self.headers.get("Content-Length") or 0)
         if length > MAX_BODY:
-            raise ApiError(413, "Requête trop volumineuse.")
+            raise ApiError(413, "Request too large.")
         raw = self.rfile.read(length) if length else b"{}"
         try:
             return json.loads(raw.decode("utf-8"))
         except ValueError:
-            raise ApiError(400, "JSON invalide.")
+            raise ApiError(400, "Invalid JSON.")
 
-    # -- routage
+    # -- routing
     def _dispatch(self, method: str) -> None:
         parsed = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(parsed.query)
@@ -532,12 +532,12 @@ class Handler(BaseHTTPRequestHandler):
             elif method == "GET":
                 self._static(urllib.parse.unquote(parsed.path))
             else:
-                raise ApiError(405, "Méthode non autorisée.")
+                raise ApiError(405, "Method not allowed.")
         except ApiError as e:
             self._json({"error": e.message}, e.status)
-        except Exception as e:  # noqa: BLE001 : on veut toujours répondre au navigateur
+        except Exception as e:  # noqa: BLE001: always answer the browser
             traceback.print_exc()
-            self._json({"error": f"Erreur interne : {e}"}, 500)
+            self._json({"error": f"Internal error: {e}"}, 500)
 
     def _api(self, method: str, route: str, query: dict) -> None:
         q = lambda k: (query.get(k) or [""])[0]  # noqa: E731
@@ -551,12 +551,12 @@ class Handler(BaseHTTPRequestHandler):
         if method == "POST" and route == "cards":
             idents = self._body().get("identifiers") or []
             if not isinstance(idents, list) or len(idents) > 1000:
-                raise ApiError(400, "Liste de cartes invalide.")
+                raise ApiError(400, "Invalid card list.")
             return self._json(CARDS.get(idents))
         if method == "POST" and route == "fr":
             ids = self._body().get("oracle_ids") or []
             if not isinstance(ids, list) or len(ids) > 200:
-                raise ApiError(400, "Liste invalide.")
+                raise ApiError(400, "Invalid list.")
             return self._json(FRENCH.get_many(ids))
         if route == "decks" and method == "GET":
             return self._json(list_decks())
@@ -565,36 +565,35 @@ class Handler(BaseHTTPRequestHandler):
             if method == "GET":
                 data = read_json(path)
                 if data is None:
-                    raise ApiError(404, "Deck introuvable.")
+                    raise ApiError(404, "Deck not found.")
                 return self._json(data)
             if method == "PUT":
                 body = self._body()
                 if not isinstance(body, dict):
-                    raise ApiError(400, "Deck invalide.")
+                    raise ApiError(400, "Invalid deck.")
                 write_json(path, body)
                 return self._json({"ok": True})
             if method == "DELETE":
                 path.unlink(missing_ok=True)
                 return self._json({"ok": True})
-        raise ApiError(404, "Route inconnue.")
+        raise ApiError(404, "Unknown route.")
 
     def _static(self, path: str) -> None:
         if path in ("", "/"):
             path = "/index.html"
         target = (WEB_DIR / path.lstrip("/")).resolve()
         if WEB_DIR not in target.parents or not target.is_file():
-            raise ApiError(404, "Fichier introuvable.")
+            raise ApiError(404, "File not found.")
         ctype = MIME.get(target.suffix.lower(), "application/octet-stream")
         self._send(200, target.read_bytes(), ctype)
 
 
 def open_browser(url: str) -> None:
-    """Ouvre le navigateur par défaut.
+    """Opens the default browser.
 
-    Sous Linux, les navigateurs basés sur Chromium (Chrome, Brave, Edge…) écrivent
-    des messages de diagnostic sans gravité (« zygote … Broken pipe ») quand ils
-    transmettent l'adresse à une fenêtre déjà ouverte. On les envoie vers /dev/null
-    pour ne pas polluer la console.
+    On Linux, Chromium-based browsers (Chrome, Brave, Edge…) print harmless
+    diagnostic messages ("zygote … Broken pipe") when they hand the URL over to an
+    already open window. They go to /dev/null so they don't clutter the console.
     """
     if sys.platform.startswith("linux") and not os.environ.get("BROWSER"):
         for cmd in (["xdg-open", url], ["gio", "open", url]):
@@ -615,9 +614,9 @@ def main() -> None:
         except (AttributeError, ValueError):
             pass
 
-    parser = argparse.ArgumentParser(description="Copy Slips : fiches de copie pour Magic: The Gathering.")
+    parser = argparse.ArgumentParser(description="Copy Slips: copy slips for Magic: The Gathering.")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--no-browser", action="store_true", help="ne pas ouvrir le navigateur")
+    parser.add_argument("--no-browser", action="store_true", help="don't open the browser")
     args = parser.parse_args()
 
     DECKS_DIR.mkdir(parents=True, exist_ok=True)
@@ -631,17 +630,17 @@ def main() -> None:
         except OSError:
             continue
     if server is None:
-        sys.exit(f"Aucun port libre entre {args.port} et {args.port + 19}.")
+        sys.exit(f"No free port between {args.port} and {args.port + 19}.")
 
     url = f"http://127.0.0.1:{server.server_address[1]}/"
-    print(f"Copy Slips est lancé : {url}")
-    print("Laissez cette fenêtre ouverte pendant l'utilisation. Ctrl+C (ou fermer la fenêtre) pour arrêter.")
+    print(f"Copy Slips is running: {url}")
+    print("Keep this window open while you use it. Press Ctrl+C (or close the window) to stop.")
     if not args.no_browser:
         threading.Timer(0.5, open_browser, args=(url,)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nArrêt.")
+        print("\nStopped.")
     finally:
         server.server_close()
 

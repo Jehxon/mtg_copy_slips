@@ -1,16 +1,15 @@
-// Calibrage : choix de la grille de miniatures dans un rectangle et de la
-// plus grande taille de police qui laisse tout le texte visible.
+// Fitting: picks the grid of minis on a slip and the biggest font size that
+// keeps all the text visible.
 //
-// La mesure se fait dans le navigateur, sur une miniature réelle placée hors
-// écran : c'est le même moteur qui imprimera, donc ce qui tient ici tient
-// sur le papier.
+// Measuring happens in the browser, on a real mini placed off-screen: the same
+// engine does the printing, so whatever fits here fits on paper.
 
-export const PAD = 1.2; // marge intérieure du rectangle (mm)
-export const GAP = 1.0; // espace entre deux miniatures (mm)
-const MIN_W = 19; // largeur minimale d'une miniature (mm) : en dessous, une ligne ne contient que 2-3 mots
-const SAFETY_W = 0.2; // marge de sécurité de la mesure (mm), contre les écarts d'arrondi écran/impression
+export const PAD = 1.2; // slip inner padding (mm)
+export const GAP = 1.0; // gap between two minis (mm)
+const MIN_W = 19; // minimum mini width (mm): any narrower and a line only holds 2-3 words
+const SAFETY_W = 0.2; // measuring safety margin (mm), against screen/print rounding differences
 const SAFETY_H = 0.3;
-const MIN_H = 8.5; // hauteur minimale d'une miniature (mm)
+const MIN_H = 8.5; // minimum mini height (mm)
 
 let root = null;
 const cache = new Map();
@@ -36,7 +35,7 @@ function fits(mini, fs) {
   return bottom <= box.bottom - border + 0.25 && mini.scrollWidth <= mini.clientWidth + 1;
 }
 
-/** Plus grande police (pt, au dixième) entre min et max qui tient dans w×h mm. */
+/** Biggest font size (pt, to the tenth) between min and max that fits in w×h mm. */
 export function bestFont(html, w, h, S) {
   const key = `${S.font}|${S.minFont}|${S.maxFont}|${w.toFixed(2)}x${h.toFixed(2)}|${html}`;
   const hit = cache.get(key);
@@ -63,7 +62,7 @@ export function bestFont(html, w, h, S) {
   return res;
 }
 
-/** Toutes les grilles possibles (lignes × colonnes) dans un rectangle. */
+/** Every possible grid (rows × columns) on a slip. */
 export function gridCandidates(S) {
   const W = S.slipW - 2 * PAD;
   const H = S.slipH - 2 * PAD;
@@ -89,7 +88,7 @@ function better(a, b) {
   return a.cw * a.ch > b.cw * b.ch;
 }
 
-/** Meilleure grille pour exactement n miniatures (ou null si impossible). */
+/** Best grid for exactly n minis (or null if there's none). */
 export function layoutFor(html, n, S) {
   let best = null;
   for (const g of gridCandidates(S)) {
@@ -101,8 +100,8 @@ export function layoutFor(html, n, S) {
 }
 
 /**
- * copies = 'auto' : le plus de miniatures possible (au plus S.maxCopies)
- * avec une police au moins égale à S.minFont. Sinon, le nombre demandé.
+ * copies = 'auto': as many minis as possible (at most S.maxCopies) with a font
+ * size of at least S.minFont. Otherwise, the requested count.
  */
 export function computeLayout(html, copies, S) {
   if (copies !== 'auto') {

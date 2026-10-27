@@ -1,4 +1,4 @@
-// Contenu et rendu HTML d'une miniature de carte.
+// Content and HTML rendering of a card mini.
 import { assetUrl } from './api.js';
 
 let SYMBOLS = {};
@@ -6,12 +6,13 @@ export function setSymbols(map) {
   SYMBOLS = map || {};
 }
 
+// Labels printed on the minis, in the card language.
 const LABELS = {
   en: { token: 'Copy token', copy: 'Copy', ability: 'Ability copy', illus: 'Illus.' },
   fr: { token: 'Jeton copie', copy: 'Copie', ability: 'Copie de capacité', illus: 'Ill.' },
 };
 
-// accent : bordure et pastilles ; tint : fond de l'en-tête.
+// accent: border and badges; tint: header background.
 const PALETTE = {
   W: { accent: '#c2a960', tint: '#f8f2df' },
   U: { accent: '#2f77b6', tint: '#deebf7' },
@@ -24,15 +25,16 @@ const PALETTE = {
 };
 const NEUTRAL = { accent: '#6b6b6b', tint: '#eeeeee' };
 
+// [type to look for in the type line, group heading in the card list]
 export const GROUPS = [
-  ['Creature', 'Créatures'],
+  ['Creature', 'Creatures'],
   ['Planeswalker', 'Planeswalkers'],
-  ['Battle', 'Batailles'],
-  ['Instant', 'Éphémères'],
-  ['Sorcery', 'Rituels'],
-  ['Enchantment', 'Enchantements'],
-  ['Artifact', 'Artefacts'],
-  ['Land', 'Terrains'],
+  ['Battle', 'Battles'],
+  ['Instant', 'Instants'],
+  ['Sorcery', 'Sorceries'],
+  ['Enchantment', 'Enchantments'],
+  ['Artifact', 'Artifacts'],
+  ['Land', 'Lands'],
 ];
 
 export function escapeHTML(s) {
@@ -40,9 +42,9 @@ export function escapeHTML(s) {
 }
 
 /**
- * Découpe un groupe {…} en symboles connus. Certaines impressions (surtout
- * françaises récentes) écrivent {RRR} pour {R}{R}{R}, {2WW} pour {2}{W}{W},
- * ou {(u/p)} pour {U/P}. Renvoie null si le groupe n'est pas reconnu.
+ * Splits a {…} group into known symbols. Some printings (mostly recent French
+ * ones) write {RRR} for {R}{R}{R}, {2WW} for {2}{W}{W}, or {(u/p)} for {U/P}.
+ * Returns null if the group isn't recognized.
  */
 function symbolTokens(group) {
   if (SYMBOLS[group]) return [group];
@@ -54,19 +56,19 @@ function symbolTokens(group) {
   return syms.every((s) => SYMBOLS[s]) ? syms : null;
 }
 
-// Ponctuation collée à une suite de symboles (y compris l'espace français avant « : »).
+// Punctuation glued to a run of symbols (including the French space before ":").
 const SYM_TRAIL = /^(?:\s?[:;!?»]|[.,)\]”])+/;
 const SYM_LEAD = /[(«“]\s?$/;
 
 /**
- * Texte avec les {X} remplacés par les symboles Scryfall (en couleur). Chaque
- * suite de symboles forme un bloc insécable avec sa ponctuation, pour ne jamais
- * couper « {R}{R}{R}. » en fin de ligne.
+ * Text with each {X} replaced by its (colored) Scryfall symbol. Each run of
+ * symbols forms an unbreakable block with its punctuation, so "{R}{R}{R}." is
+ * never split at the end of a line.
  */
 export function symbolsHTML(text) {
   const items = [];
   const parts = String(text ?? '')
-    .replace(/\{\(\}([0-9a-z])\/([0-9a-z])\)\}/gi, '{$1/$2}') // forme cassée « {(}w/b)} »
+    .replace(/\{\(\}([0-9a-z])\/([0-9a-z])\)\}/gi, '{$1/$2}') // broken "{(}w/b)}" form
     .split(/(\{[^{}]+\})/);
   for (const part of parts) {
     const syms = part.startsWith('{') ? symbolTokens(part) : null;
@@ -113,14 +115,14 @@ export function cardGroup(card) {
   return i < 0 ? GROUPS.length : i;
 }
 
-/** Données d'une face, dans la langue choisie (repli sur l'anglais). */
+/** Data for one face, in the chosen language (falls back to English). */
 export function faceData(card, i, lang) {
   const multi = card.faces?.length > 0;
   const f = multi ? card.faces[i] : card;
   let fr = lang === 'fr' && card.fr ? (multi ? card.fr.faces?.[i] : card.fr) : null;
-  // Pas de texte français (vieilles impressions seulement) : tout en anglais, pour rester cohérent.
+  // No French text (old printings only): keep the whole card in English, for consistency.
   if (fr && !fr.oracle_text && f.oracle_text) fr = null;
-  // Scryfall donne parfois « A // B » comme nom de chaque face d'une carte split.
+  // Scryfall sometimes gives "A // B" as the name of each face of a split card.
   const frName = multi && fr?.name?.includes(' // ') ? fr.name.split(' // ')[i] : fr?.name;
   return {
     name: frName || f.name,
@@ -177,7 +179,7 @@ function paragraph(text, reminder, planeswalker) {
   return { html: prefix + html, bullet: t.startsWith('•') };
 }
 
-/** Liste des paragraphes (capacités) d'une carte, pour l'éditeur. */
+/** A card's paragraphs (abilities), for the card editor. */
 export function abilityList(card, lang) {
   const out = [];
   for (let i = 0; i < faceCount(card); i++) {
@@ -190,12 +192,12 @@ export function abilityList(card, lang) {
   return out;
 }
 
-/** Modèle de la miniature : tout ce qui est affiché, sans la mise en page. */
+/** The mini's model: everything it shows, without the layout. */
 export function buildContent(card, opts, S) {
   const lang = S.lang;
   const n = faceCount(card);
   const selected = opts.abilities?.length ? new Set(opts.abilities) : null;
-  // En copie de capacité, on prend les capacités cochées quelle que soit leur face.
+  // For an ability copy, take the ticked abilities whatever face they're on.
   const faceIdx = opts.face === 'all' || selected ? [...Array(n).keys()] : [Math.min(Number(opts.face) || 0, n - 1)];
   const reminder = opts.reminder && opts.reminder !== 'default' ? opts.reminder : S.reminder;
 
@@ -249,8 +251,8 @@ function statText(f) {
 }
 
 /**
- * HTML d'une miniature. withArt=false sert à la mesure du texte : la mise en
- * page est identique, seules les images de fond sont omises.
+ * HTML of a mini. withArt=false is used to measure the text: the layout is
+ * identical, only the background images are left out.
  */
 export function miniHTML(ct, withArt = true) {
   const col = colorStyle(ct.colors, ct.enType, ct.colorFrames);
@@ -271,7 +273,7 @@ export function miniHTML(ct, withArt = true) {
 
     const stat = ability ? '' : statText(f);
     const space = stat ? `<span class="stat-space">${escapeHTML(stat)}</span>` : '';
-    // Crédit de l'illustration (exigé par Scryfall), en dernière ligne comme sur les vraies cartes.
+    // Art credit (required by Scryfall), on the last line like on real cards.
     const credit = i === 0 && ct.art !== 'none' && ct.artist
       ? `${LABELS[ct.lang]?.illus || LABELS.en.illus} ${ct.artist} · © WotC`
       : '';

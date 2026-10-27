@@ -11,7 +11,7 @@ creatures and auras stuck on creatures. The other copies instants, sorceries and
 abilities, and messes with the stack a lot: copy this, counter that, bounce the
 other thing back to hand…
 
-In thoses edge cases, generic copy tokens don't cut it, at least for me. They don't tell you *what* got copied, or which
+In those edge cases, generic copy tokens don't cut it, at least for me. They don't tell you *what* got copied, or which
 abilities a copy of a five-card mutate pile actually has. In my experience, a few turns in, and nobody at
 the table knows what's going on anymore.
 
@@ -40,9 +40,6 @@ When the card gets copied, the exact copy is already at hand.
   straight from your browser, with crop marks, 9 slips per A4 page.
 - Saves each deck and its settings automatically.
 
-> **Heads-up:** the interface is in French for now. The cards themselves can be
-> printed in English.
-
 ## Getting started
 
 All you need is **Python 3.9 or newer**. There's nothing else to install: no pip,
@@ -50,8 +47,8 @@ no npm, no build step.
 
 1. Grab the project: **Code → Download ZIP** on GitHub (then unzip it), or `git clone` it.
 2. Launch it:
-   - **Windows**: double-click `lancer.bat`;
-   - **Linux / macOS**: run `./lancer.sh` (or `python3 app.py`).
+   - **Windows**: double-click `start.bat`;
+   - **Linux / macOS**: run `./start.sh` (or `python3 app.py`).
 3. Your browser opens on `http://127.0.0.1:8765/`. Keep the terminal window open
    while you use the tool, and close it when you're done.
 
@@ -62,14 +59,13 @@ please open an issue!
 
 ## How to use it
 
-The tool has three tabs: **Cartes** (cards), **Réglages** (settings) and
-**Importer** (import).
+The tool has three tabs: **Cards**, **Settings** and **Import**.
 
-1. **Import a deck** in the *Importer* tab. Paste an Archidekt link (the deck must
+1. **Import a deck** in the *Import* tab. Paste an Archidekt link (the deck must
    be public or unlisted) or a text list. Sideboard and maybeboard are skipped.
-2. **Pick the cards you copy** in the *Cartes* tab by ticking them. The shortcut
-   buttons add whole groups at once: creatures (*Créatures*), instants & sorceries
-   (*Éphémères & rituels*), *Auras* and mutate cards (*Mutation*).
+2. **Pick the cards you copy** in the *Cards* tab by ticking them. The shortcut
+   buttons add whole groups at once: *Creatures*, *Instants & sorceries*, *Auras*
+   and *Mutate*.
 3. **Tweak a card** by clicking it:
    - **copies per slip**: *Auto* fits as many as it can. The dropdown shows the font
      size you'd get for each count;
@@ -77,9 +73,9 @@ The tool has three tabs: **Cartes** (cards), **Réglages** (settings) and
    - **face**: one face or all of them, for double-faced, split and adventure cards;
    - **art style**: art box, title banner, frame around the text, or faded background;
    - **ability copy**: tick one or more abilities to print only those.
-4. **Adjust the settings** in the *Réglages* tab: language, font, min/max font
-   size, reminder text, slip size, blank slips, paper size.
-5. **Print** with the **Imprimer / PDF** button.
+4. **Adjust the settings** in the *Settings* tab: card language, font, min/max
+   font size, reminder text, slip size, blank slips, paper size.
+5. **Print** with the **Print / PDF** button.
 
 Everything saves automatically, per deck. Changed your deck on Archidekt? The ↻
 button reloads it and keeps your settings. Click any slip in the preview to jump
@@ -94,7 +90,7 @@ also print a fixed number of blanks, or just fill up the last page.
 
 ## Printing and cutting
 
-What you see in the preview is exactly what gets printed. Hit **Imprimer / PDF**,
+What you see in the preview is exactly what gets printed. Hit **Print / PDF**,
 then in the print dialog:
 
 - use a Chromium-based browser if you can (Chrome, Edge, Brave, Chromium…);
@@ -140,6 +136,15 @@ You can delete `data/cache/` anytime: it rebuilds itself.
 | `web/js/parse.js` | Reads text deck lists |
 
 There's no build step: edit a file, reload the page.
+
+## License
+
+Copy Slips is released under the [BSD Zero Clause License](LICENSE) (0BSD). In
+plain words: do whatever you want with it. Use it, change it, sell it, put it in
+closed-source software. No strings attached, not even credit (though a shout-out
+is always nice).
+
+The fonts in `web/fonts/` keep their own license (SIL Open Font License).
 
 ## Credits and legal stuff
 

@@ -1,5 +1,5 @@
 @echo off
-rem Lance Copy Slips (Windows) puis ouvre le navigateur. Double-cliquez sur ce fichier.
+rem Starts Copy Slips (Windows) and opens the browser. Double-click this file.
 cd /d "%~dp0"
 where py >nul 2>nul
 if %errorlevel%==0 (

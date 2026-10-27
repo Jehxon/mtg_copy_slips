@@ -1,7 +1,7 @@
 /* ==========================================================================
-   Feuilles imprimables : pages, rectangles (taille carte) et miniatures.
-   Toutes les dimensions sont en mm/pt : l'aperçu est exactement ce qui
-   sera imprimé (l'aperçu est seulement mis à l'échelle via transform).
+   Printable sheets: pages, slips (card-sized) and minis.
+   Every dimension is in mm/pt: the preview is exactly what gets printed
+   (the preview is only scaled with a transform).
    ========================================================================== */
 
 :root {
@@ -48,7 +48,7 @@
   pointer-events: none;
 }
 
-/* ---------- Rectangle (glissé dans la sleeve) ---------- */
+/* ---------- Slip (goes into the sleeve) ---------- */
 .slip {
   position: absolute;
   box-sizing: border-box;
@@ -83,7 +83,7 @@
   pointer-events: none;
 }
 
-/* ---------- Miniature ---------- */
+/* ---------- Mini ---------- */
 .mini {
   position: relative;
   box-sizing: border-box;
@@ -100,7 +100,7 @@
   border: 0.3mm solid var(--accent, #888);
   border-radius: 1.1mm;
   font-kerning: normal;
-  /* Métriques exactes (sans hinting) : même mise en page à l'écran, en mesure et à l'impression. */
+  /* Exact metrics (no hinting): same layout on screen, when measuring and when printing. */
   text-rendering: geometricPrecision;
 }
 .mini-face {
@@ -128,8 +128,8 @@
   font-size: 1.1em;
   line-height: 1.06;
 }
-/* Les mots ne sont jamais coupés : un mot trop long déborde, la mesure le
-   détecte et le calibrage choisit une police plus petite. */
+/* Words are never broken: a word that's too long overflows, the measuring
+   catches it and the fitting picks a smaller font size. */
 .mini-name {
   flex: 1 1 auto;
 }
@@ -183,7 +183,7 @@
   color: #6a6a6a;
 }
 .mini-credit .stat-space {
-  font-size: calc(1em / 0.62); /* réserve la place à la taille normale du texte */
+  font-size: calc(1em / 0.62); /* reserves the space at the regular text size */
   font-style: normal;
 }
 .loy {
@@ -213,8 +213,8 @@
   margin: 0 0 0 0.04em;
 }
 
-/* Force/endurance, loyauté, défense : en bas à droite. Un fantôme invisible
-   (.stat-space) réserve la place à la fin du texte pour éviter tout chevauchement. */
+/* Power/toughness, loyalty, defense: bottom right. An invisible ghost
+   (.stat-space) reserves the space at the end of the text to avoid any overlap. */
 .mini-stat,
 .stat-space {
   padding: 0 0.34em;
@@ -240,12 +240,12 @@
   visibility: hidden;
 }
 
-/* ---------- Illustrations ---------- */
+/* ---------- Card art ---------- */
 .mini-artbox {
   display: none;
 }
 
-/* Encadré : l'illustration occupe la place laissée libre par le texte. */
+/* Art box: the art fills the space the text leaves free. */
 .art-top .mini-artbox {
   display: block;
   flex: 1 1 auto;
@@ -257,7 +257,7 @@
   flex-grow: 0;
 }
 
-/* Bandeau : l'illustration derrière le nom et le type. */
+/* Banner: the art behind the name and type line. */
 .art-band .mini-face:first-child .mini-head {
   padding-top: 0.6em;
   padding-bottom: 0.38em;
@@ -272,7 +272,7 @@
   text-shadow: none;
 }
 
-/* Fond : l'illustration estompée derrière tout le texte. */
+/* Faded background: the art faded behind all the text. */
 .art-bg {
   background: linear-gradient(rgba(255, 255, 255, var(--veil)), rgba(255, 255, 255, var(--veil))),
     var(--art, none) center / cover no-repeat, #fff;
@@ -284,7 +284,7 @@
   color: #333;
 }
 
-/* Cadre : l'illustration visible autour des zones de texte. */
+/* Frame: the art shows around the text boxes. */
 .art-frame {
   background: var(--art, none) center / cover no-repeat, var(--accent);
 }
@@ -310,7 +310,7 @@
   bottom: calc(0.8mm + 0.15em);
 }
 
-/* ---------- Zone de mesure (invisible) ---------- */
+/* ---------- Measuring area (invisible) ---------- */
 #measure {
   position: absolute;
   left: -10000px;
@@ -322,7 +322,7 @@
   position: relative;
 }
 
-/* ---------- Impression ---------- */
+/* ---------- Printing ---------- */
 @media print {
   html,
   body {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Interface (tout ce qui n'est pas imprimé).
+   Interface (everything that doesn't get printed).
    ========================================================================== */
 
 :root {
@@ -50,7 +50,7 @@ textarea {
   height: 100vh;
 }
 
-/* ---------- Boutons et champs ---------- */
+/* ---------- Buttons and fields ---------- */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -157,7 +157,7 @@ input[type="range"] {
   accent-color: var(--ui-accent);
 }
 
-/* ---------- Barre latérale ---------- */
+/* ---------- Sidebar ---------- */
 #sidebar {
   display: flex;
   flex-direction: column;
@@ -294,7 +294,7 @@ input[type="range"] {
   color: var(--ui-muted);
 }
 
-/* ---------- Liste des cartes ---------- */
+/* ---------- Card list ---------- */
 .list-tools {
   position: sticky;
   top: 0;
@@ -429,7 +429,7 @@ input[type="range"] {
   margin-top: 10px;
 }
 
-/* Éditeur d'une carte */
+/* Card editor */
 .editor {
   padding: 10px 16px 14px 19px;
   background: var(--ui-accent-weak);
@@ -505,7 +505,7 @@ input[type="range"] {
   margin-top: 10px;
 }
 
-/* ---------- Réglages ---------- */
+/* ---------- Settings ---------- */
 .settings {
   padding: 4px 16px 24px;
 }
@@ -563,7 +563,7 @@ legend {
   margin-bottom: 8px;
 }
 
-/* ---------- Aperçu ---------- */
+/* ---------- Preview ---------- */
 #preview {
   display: flex;
   flex-direction: column;

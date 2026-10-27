@@ -1,4 +1,4 @@
-// Appels au serveur local (app.py).
+// Calls to the local server (app.py).
 
 async function request(method, url, body) {
   const init = { method };
@@ -10,19 +10,19 @@ async function request(method, url, body) {
   try {
     resp = await fetch(url, init);
   } catch {
-    throw new Error("Le serveur local ne répond pas. Est-ce que app.py tourne toujours ?");
+    throw new Error("The local server isn't responding. Is app.py still running?");
   }
   let data = null;
   try {
     data = await resp.json();
   } catch {
-    /* réponse vide */
+    /* empty response */
   }
-  if (!resp.ok) throw new Error(data?.error || `Erreur ${resp.status}`);
+  if (!resp.ok) throw new Error(data?.error || `Error ${resp.status}`);
   return data;
 }
 
-// Échappe aussi ' ( ) pour pouvoir placer l'adresse dans un url('…') CSS.
+// Also escapes ' ( ) so the address can go inside a CSS url('…').
 export const assetUrl = (url) => '/api/asset?u='
   + encodeURIComponent(url).replace(/['()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 

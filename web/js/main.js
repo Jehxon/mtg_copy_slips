@@ -1,4 +1,4 @@
-// Copy Slips : état de l'application, interface et orchestration.
+// Copy Slips: app state, interface and orchestration.
 import * as api from './api.js';
 import { parseDeckText } from './parse.js';
 import {
@@ -35,8 +35,8 @@ const FONTS = {
   barlow: '"Barlow Semi Condensed", "Arial Narrow", sans-serif',
   crimson: '"Crimson Pro", Georgia, serif',
 };
-const ART_LABELS = { none: 'Aucune', top: 'Encadré', band: 'Bandeau', frame: 'Cadre', bg: 'Fond estompé' };
-const REMINDER_LABELS = { hide: 'Masqué', show: 'Affiché' };
+const ART_LABELS = { none: 'None', top: 'Art box', band: 'Banner', frame: 'Frame', bg: 'Faded background' };
+const REMINDER_LABELS = { hide: 'hidden', show: 'shown' };
 const LS_LAST = 'copyslips.lastDeck';
 const LS_ZOOM = 'copyslips.zoom';
 
@@ -44,9 +44,9 @@ const state = {
   deck: null, // { slug, name, source }
   S: { ...DEFAULTS },
   cards: [], // [{ key, id, name, qty, selected, opts }]
-  data: new Map(), // id Scryfall -> carte simplifiée (+ .fr)
+  data: new Map(), // Scryfall id -> trimmed card (+ .fr)
   results: new Map(), // key -> { layout, html }
-  open: null, // key de la carte dont l'éditeur est ouvert
+  open: null, // key of the card whose editor is open
   filter: '',
   onlySelected: false,
   decks: [],
@@ -55,9 +55,9 @@ const state = {
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
-const fmt = (x) => String(Math.round(x * 10) / 10).replace('.', ',');
-const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
-const fold = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const fmt = (x) => String(Math.round(x * 10) / 10);
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const fold = (s) => String(s).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 function lsGet(key) {
   try {
@@ -71,7 +71,7 @@ function lsSet(key, value) {
     if (value == null) localStorage.removeItem(key);
     else localStorage.setItem(key, value);
   } catch {
-    /* stockage indisponible : ce n'est qu'un confort */
+    /* storage unavailable: it's only a convenience */
   }
 }
 
@@ -99,7 +99,7 @@ async function withBusy(btn, fn) {
   }
 }
 
-// --------------------------------------------------------------------------- cartes
+// --------------------------------------------------------------------------- cards
 
 const cardOf = (c) => (c.id ? state.data.get(c.id) : null);
 const nameOf = (c) => displayName(cardOf(c), state.S.lang) || c.name;
@@ -145,7 +145,7 @@ function slipPlan() {
   return { slips, printed, blanks, per };
 }
 
-// --------------------------------------------------------------------------- rendu
+// --------------------------------------------------------------------------- rendering
 
 let frame = 0;
 let saveRequested = false;
@@ -198,9 +198,9 @@ function renderPreview() {
   const plan = slipPlan();
   const n = renderPages(pagesEl, plan.slips, state.S);
   $('#stats').innerHTML = plan.slips.length
-    ? `<b>${plural(n, 'page', 'pages')}</b> · ${plural(plan.printed, 'rectangle imprimé', 'rectangles imprimés')}`
-      + ` · ${plural(plan.blanks, 'vierge', 'vierges')} · ${plan.per} par page`
-    : 'Cochez des cartes dans la liste pour les ajouter à la feuille.';
+    ? `<b>${plural(n, 'page', 'pages')}</b> · ${plural(plan.printed, 'printed slip', 'printed slips')}`
+      + ` · ${plural(plan.blanks, 'blank', 'blanks')} · ${plan.per} per page`
+    : 'Tick cards in the list to add them to the sheet.';
   applyZoom();
 }
 
@@ -211,16 +211,16 @@ function rowHTML(c) {
   const col = card ? colorStyle(card.colors, frontType(card)) : null;
   let badge = '';
   if (!card) {
-    badge = '<span class="badge warn" title="Carte introuvable sur Scryfall : vérifiez son nom.">introuvable</span>';
+    badge = '<span class="badge warn" title="Card not found on Scryfall: check its name.">not found</span>';
   } else if (r) {
     const L = r.layout;
     const title = L.ok
-      ? `${plural(L.n, 'miniature', 'miniatures')} par rectangle (grille ${L.c}×${L.r}), texte en ${fmt(L.fs)} pt`
-      : 'Texte trop long : il sera coupé. Choisissez moins de copies ou baissez la taille minimale.';
+      ? `${plural(L.n, 'mini', 'minis')} per slip (${L.c}×${L.r} grid), text at ${fmt(L.fs)} pt`
+      : 'Text too long: it will be cut off. Pick fewer copies or lower the minimum size.';
     badge = `<span class="badge${L.ok ? '' : ' warn'}" title="${title}">×${L.n} · ${fmt(L.fs)} pt</span>`;
   }
   return `<div class="row${c.selected ? ' sel' : ''}${state.open === c.key ? ' open' : ''}" data-key="${escapeHTML(c.key)}">`
-    + `<input type="checkbox" data-act="toggle"${c.selected ? ' checked' : ''}${card ? '' : ' disabled'} aria-label="Imprimer ${escapeHTML(name)}">`
+    + `<input type="checkbox" data-act="toggle"${c.selected ? ' checked' : ''}${card ? '' : ' disabled'} aria-label="Print ${escapeHTML(name)}">`
     + `<button class="row-main" data-act="open"${card ? '' : ' disabled'}>`
     + `<span class="pip" style="background:${col ? col.accent : '#d0d0d0'}"></span>`
     + `<span class="row-name">${escapeHTML(name)}</span>`
@@ -239,41 +239,41 @@ function editorHTML(c) {
   const sig = miniHTML(buildContent(card, c.opts, S), false);
   const auto = computeLayout(sig, 'auto', S);
 
-  const copyOpts = [['auto', `Auto : ${plural(auto.n, 'copie', 'copies')} · ${fmt(auto.fs)} pt`]];
+  const copyOpts = [['auto', `Auto: ${plural(auto.n, 'copy', 'copies')} · ${fmt(auto.fs)} pt`]];
   for (const n of availableCounts(S, Math.max(16, S.maxCopies))) {
     const l = layoutFor(sig, n, S);
-    copyOpts.push([n, `${plural(n, 'copie', 'copies')} · ${l.ok ? `${fmt(l.fs)} pt` : 'texte coupé'}`]);
+    copyOpts.push([n, `${plural(n, 'copy', 'copies')} · ${l.ok ? `${fmt(l.fs)} pt` : 'text cut off'}`]);
   }
 
   const nFaces = faceCount(card);
   const faceOpts = [...Array(nFaces).keys()].map((i) => [i, escapeHTML(faceData(card, i, S.lang).name)]);
-  faceOpts.push(['all', 'Toutes les faces']);
+  faceOpts.push(['all', 'All faces']);
 
   const hasArt = !!(card.art || card.faces?.some((f) => f.art));
-  const artOpts = [['default', `Par défaut (${ART_LABELS[S.art]})`], ...Object.entries(ART_LABELS)];
-  const remOpts = [['default', `Par défaut (${REMINDER_LABELS[S.reminder]})`], ['hide', 'Masquer'], ['show', 'Afficher']];
+  const artOpts = [['default', `Default (${ART_LABELS[S.art]})`], ...Object.entries(ART_LABELS)];
+  const remOpts = [['default', `Default (${REMINDER_LABELS[S.reminder]})`], ['hide', 'Hide'], ['show', 'Show']];
 
   const r = state.results.get(c.key);
   const warn = r && !r.layout.ok
-    ? `<p class="ed-warn">Le texte ne tient pas, même en ${fmt(S.minFont)} pt : il sera coupé. Choisissez moins de copies, masquez le texte de rappel ou baissez la taille minimale.</p>`
+    ? `<p class="ed-warn">The text doesn't fit, even at ${fmt(S.minFont)} pt: it will be cut off. Pick fewer copies, hide reminder text or lower the minimum size.</p>`
     : '';
 
   const selected = new Set(c.opts.abilities || []);
   const abilities = abilityList(card, S.lang)
     .map((a) => `<label class="ab"><input type="checkbox" data-ability="${a.key}"${selected.has(a.key) ? ' checked' : ''}>`
-      + `<span>${nFaces > 1 ? `<span class="ab-face">${escapeHTML(a.face)} : </span>` : ''}${a.html}</span></label>`)
+      + `<span>${nFaces > 1 ? `<span class="ab-face">${escapeHTML(a.face)}: </span>` : ''}${a.html}</span></label>`)
     .join('');
 
   return `<div class="editor" data-key="${escapeHTML(c.key)}"><div class="ed-grid">`
-    + `<label class="ed-field">Copies par rectangle<select data-opt="copies">${options(copyOpts, c.opts.copies)}</select></label>`
-    + `<label class="ed-field">Rectangles à imprimer<input type="number" min="0" max="50" step="1" data-opt="slips" value="${slipCount(c)}"></label>`
+    + `<label class="ed-field">Copies per slip<select data-opt="copies">${options(copyOpts, c.opts.copies)}</select></label>`
+    + `<label class="ed-field">Slips to print<input type="number" min="0" max="50" step="1" data-opt="slips" value="${slipCount(c)}"></label>`
     + (nFaces > 1 ? `<label class="ed-field wide">Face<select data-opt="face">${options(faceOpts, c.opts.face)}</select></label>` : '')
-    + `<label class="ed-field">Illustration<select data-opt="art"${hasArt ? '' : ' disabled'}>${options(artOpts, c.opts.art)}</select></label>`
-    + `<label class="ed-field">Texte de rappel<select data-opt="reminder">${options(remOpts, c.opts.reminder)}</select></label>`
+    + `<label class="ed-field">Art<select data-opt="art"${hasArt ? '' : ' disabled'}>${options(artOpts, c.opts.art)}</select></label>`
+    + `<label class="ed-field">Reminder text<select data-opt="reminder">${options(remOpts, c.opts.reminder)}</select></label>`
     + `</div>${warn}`
-    + (abilities ? `<div class="ed-sub">Copie de capacité <small>· cochez pour n'imprimer que ces capacités</small></div>${abilities}` : '')
-    + '<div class="ed-actions"><button class="btn ghost small" data-act="locate">Voir dans l\'aperçu</button>'
-    + '<button class="btn ghost small" data-act="reset">Réglages par défaut</button></div></div>';
+    + (abilities ? `<div class="ed-sub">Ability copy <small>· tick to print only these abilities</small></div>${abilities}` : '')
+    + '<div class="ed-actions"><button class="btn ghost small" data-act="locate">Show in preview</button>'
+    + '<button class="btn ghost small" data-act="reset">Reset card settings</button></div></div>';
 }
 
 function renderList() {
@@ -281,7 +281,7 @@ function renderList() {
   const nSel = state.cards.filter((c) => c.selected).length;
   $('#tab-count').textContent = nSel ? String(nSel) : '';
   if (!state.deck) {
-    el.innerHTML = '<div class="empty-list">Aucun deck ouvert.<br><button class="btn primary" data-goto="import">Importer un deck</button></div>';
+    el.innerHTML = '<div class="empty-list">No deck open.<br><button class="btn primary" data-goto="import">Import a deck</button></div>';
     return;
   }
   const q = fold(state.filter.trim());
@@ -296,19 +296,19 @@ function renderList() {
   }
   let html = '';
   for (const [g, list] of groups) {
-    const label = g === -1 ? 'Introuvables' : g < GROUPS.length ? GROUPS[g][1] : 'Autres';
+    const label = g === -1 ? 'Not found' : g < GROUPS.length ? GROUPS[g][1] : 'Other';
     html += `<div class="group-head"><span>${label}</span><span>${list.reduce((n, c) => n + c.qty, 0)}</span></div>`;
     for (const c of list) {
       html += rowHTML(c);
       if (state.open === c.key && cardOf(c)) html += editorHTML(c);
     }
   }
-  el.innerHTML = html || '<div class="empty-list">Aucune carte ne correspond.</div>';
+  el.innerHTML = html || '<div class="empty-list">No matching cards.</div>';
 }
 
 function renderDeckBar() {
   const sel = $('#deck-select');
-  const first = state.decks.length ? 'Choisir un deck…' : 'Aucun deck sauvegardé';
+  const first = state.decks.length ? 'Pick a deck…' : 'No saved decks';
   sel.innerHTML = `<option value="">${first}</option>`
     + state.decks.map((d) => `<option value="${escapeHTML(d.slug)}">${escapeHTML(d.name)}</option>`).join('');
   sel.value = state.deck?.slug || '';
@@ -340,7 +340,7 @@ function highlight(key, on) {
 function locate(key) {
   const el = $(`#pages .slip[data-key="${CSS.escape(key)}"]`);
   if (!el) {
-    toast("Cette carte n'est pas sur la feuille : cochez-la d'abord.");
+    toast("This card isn't on the sheet: tick it first.");
     return;
   }
   el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
@@ -348,7 +348,7 @@ function locate(key) {
   setTimeout(() => highlight(key, false), 1600);
 }
 
-// --------------------------------------------------------------------------- sauvegarde
+// --------------------------------------------------------------------------- saving
 
 let saveTimer = 0;
 function setSaveStatus(text, kind = '') {
@@ -369,7 +369,7 @@ function deckJSON() {
 
 function scheduleSave() {
   if (!state.deck) return;
-  setSaveStatus('Modifié');
+  setSaveStatus('Modified');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveNow, 600);
 }
@@ -380,9 +380,9 @@ async function saveNow() {
   if (!state.deck) return;
   try {
     await api.saveDeck(state.deck.slug, deckJSON());
-    setSaveStatus('Enregistré', 'ok');
+    setSaveStatus('Saved', 'ok');
   } catch (e) {
-    setSaveStatus('Non enregistré');
+    setSaveStatus('Not saved');
     toast(e.message, 'error', 6000);
   }
 }
@@ -397,7 +397,7 @@ function makeSlug(name) {
 
 // --------------------------------------------------------------------------- import
 
-/** Résout une liste d'entrées ({id?, name, qty, set?, cn?, selected?, opts?}) via Scryfall. */
+/** Resolves a list of entries ({id?, name, qty, set?, cn?, selected?, opts?}) through Scryfall. */
 async function resolveEntries(entries) {
   const idents = entries.map((e) => (e.id
     ? { id: e.id, name: e.name }
@@ -428,7 +428,7 @@ async function resolveEntries(entries) {
 }
 
 async function importDeck(name, entries, source, merge) {
-  if (!entries.length) throw new Error('La liste est vide.');
+  if (!entries.length) throw new Error('The list is empty.');
   const { cards, missing } = await resolveEntries(entries);
   if (merge && state.deck) {
     const old = new Map(state.cards.map((c) => [fold(c.name), c]));
@@ -457,9 +457,9 @@ async function importDeck(name, entries, source, merge) {
   const found = cards.filter((c) => c.id).length;
   if (missing.length) {
     const list = missing.slice(0, 4).join(', ') + (missing.length > 4 ? '…' : '');
-    toast(`${plural(found, 'carte importée', 'cartes importées')}. Introuvables : ${list}`, 'error', 9000);
+    toast(`${plural(found, 'card imported', 'cards imported')}. Not found: ${list}`, 'error', 9000);
   } else {
-    toast(`${plural(found, 'carte importée', 'cartes importées')}. Cochez celles que vous copiez.`);
+    toast(`${plural(found, 'card imported', 'cards imported')}. Tick the ones you copy.`);
   }
   if (state.S.lang === 'fr') ensureFrench();
 }
@@ -498,7 +498,7 @@ function ensureFrench() {
 
 async function loadFrench() {
   const ids = [];
-  // Les cartes cochées d'abord : ce sont elles qui apparaissent dans l'aperçu.
+  // Ticked cards first: they're the ones shown in the preview.
   for (const c of [...state.cards].sort((a, b) => b.selected - a.selected)) {
     const d = cardOf(c);
     if (d && d.fr === undefined && d.oracle_id && !ids.includes(d.oracle_id)) ids.push(d.oracle_id);
@@ -506,7 +506,7 @@ async function loadFrench() {
   if (!ids.length) return;
   for (let i = 0; i < ids.length; i += 20) {
     if (state.S.lang !== 'fr') return;
-    toast(`Chargement des textes français… ${i} / ${ids.length}`, '', 0);
+    toast(`Loading French card texts… ${i} / ${ids.length}`, '', 0);
     let res;
     try {
       res = await api.french(ids.slice(i, i + 20));
@@ -517,19 +517,19 @@ async function loadFrench() {
     for (const d of state.data.values()) if (d.oracle_id in res) d.fr = res[d.oracle_id] || null;
     update({ save: false });
   }
-  toast('Textes français chargés.');
+  toast('French card texts loaded.');
 }
 
-// --------------------------------------------------------------------------- impression
+// --------------------------------------------------------------------------- printing
 
 async function printNow() {
   const plan = slipPlan();
   if (!state.deck || !plan.slips.length) {
-    toast('Rien à imprimer : cochez des cartes ou activez les rectangles vierges.');
+    toast('Nothing to print: tick some cards or turn on blank slips.');
     return;
   }
   await saveNow();
-  toast("Préparation de l'impression…", '', 0);
+  toast('Getting ready to print…', '', 0);
   const arts = new Set();
   for (const r of state.results.values()) {
     const m = r.html.match(/url\('([^']+)'\)/);
@@ -547,7 +547,7 @@ async function printNow() {
   window.print();
 }
 
-// --------------------------------------------------------------------------- événements
+// --------------------------------------------------------------------------- events
 
 function parseOpt(name, value) {
   if (name === 'copies') return value === 'auto' ? 'auto' : Number(value);
@@ -572,7 +572,7 @@ function quickSelect(kind) {
 }
 
 function bindEvents() {
-  // Onglets et raccourcis « aller à ».
+  // Tabs and "go to" shortcuts.
   for (const b of $$('.tab')) b.addEventListener('click', () => setTab(b.dataset.tab));
   document.addEventListener('click', (e) => {
     const go = e.target.closest('[data-goto]');
@@ -605,7 +605,7 @@ function bindEvents() {
     renderDeckBar();
   });
   $('#btn-delete').addEventListener('click', async () => {
-    if (!state.deck || !window.confirm(`Supprimer le deck « ${state.deck.name} » et ses réglages ?`)) return;
+    if (!state.deck || !window.confirm(`Delete the deck "${state.deck.name}" and its settings?`)) return;
     clearTimeout(saveTimer);
     const slug = state.deck.slug;
     state.deck = null;
@@ -633,7 +633,7 @@ function bindEvents() {
   $('#btn-arch').addEventListener('click', (e) => {
     const ref = $('#arch-url').value.trim();
     if (!ref) {
-      toast('Collez le lien du deck Archidekt.');
+      toast('Paste the link to your Archidekt deck.');
       return;
     }
     withBusy(e.currentTarget, () => importArchidekt(ref, false));
@@ -644,11 +644,11 @@ function bindEvents() {
   $('#btn-text').addEventListener('click', (e) => {
     const entries = parseDeckText($('#text-list').value);
     const merge = !!state.deck && $('#text-merge').checked;
-    const name = $('#text-name').value.trim() || (merge ? state.deck.name : 'Deck importé');
+    const name = $('#text-name').value.trim() || (merge ? state.deck.name : 'Imported deck');
     withBusy(e.currentTarget, () => importDeck(name, entries, { type: 'text' }, merge));
   });
 
-  // Liste des cartes.
+  // Card list.
   $('#card-search').addEventListener('input', (e) => {
     state.filter = e.target.value;
     renderList();
@@ -714,7 +714,7 @@ function bindEvents() {
     hovered = null;
   });
 
-  // Clic sur un rectangle de l'aperçu : ouvre la carte dans la liste.
+  // Clicking a slip in the preview opens that card in the list.
   $('#pages').addEventListener('click', (e) => {
     const slip = e.target.closest('.slip[data-key]');
     if (!slip) return;
@@ -726,7 +726,7 @@ function bindEvents() {
     $(`#card-list .row[data-key="${CSS.escape(slip.dataset.key)}"]`)?.scrollIntoView({ block: 'center' });
   });
 
-  // Réglages.
+  // Settings.
   const settings = $('#settings');
   settings.addEventListener('change', (e) => {
     const el = e.target.closest('[data-setting]');
@@ -752,7 +752,7 @@ function bindEvents() {
     update();
   });
   settings.addEventListener('input', (e) => {
-    // Aperçu immédiat de l'intensité, sans recalcul.
+    // Live preview of the strength, without recomputing the layout.
     if (e.target.dataset.setting === 'artStrength') {
       document.documentElement.style.setProperty('--veil', String(1 - parseFloat(e.target.value)));
     }
@@ -764,7 +764,7 @@ function bindEvents() {
     update();
   });
 
-  // Aperçu.
+  // Preview.
   $('#zoom').addEventListener('input', (e) => {
     state.zoom = parseFloat(e.target.value);
     lsSet(LS_ZOOM, String(state.zoom));
@@ -783,7 +783,7 @@ function bindEvents() {
   });
   $('#btn-print').addEventListener('click', printNow);
 
-  // Dernière sauvegarde si l'onglet est fermé pendant le délai d'enregistrement.
+  // Last-chance save if the tab is closed while a save is pending.
   window.addEventListener('pagehide', () => {
     if (!saveTimer || !state.deck) return;
     fetch(`/api/decks/${encodeURIComponent(state.deck.slug)}`, {
@@ -820,7 +820,7 @@ async function init() {
   try {
     setSymbols(await api.symbols());
   } catch (e) {
-    toast(`Symboles de mana indisponibles : ${e.message}`, 'error', 7000);
+    toast(`Mana symbols unavailable: ${e.message}`, 'error', 7000);
   }
   await fonts;
   try {

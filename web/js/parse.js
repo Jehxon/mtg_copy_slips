@@ -1,11 +1,12 @@
-// Lecture d'une liste de deck au format texte (Archidekt, Moxfield, MTGA, MTGO…).
+// Reads a deck list in text format (Archidekt, Moxfield, MTGA, MTGO…).
 
+// Section headings, in English and French (for exports from French sites).
 const SKIP_SECTION = /^(sideboard|side ?board|maybeboard|maybe|considering|tokens?|jetons?|réserve)$/i;
 const KEEP_SECTION = /^(deck|main ?deck|mainboard|main|commander|commandant|companion|compagnon)$/i;
 
 /**
- * Renvoie [{ name, qty, set, cn }] : les doublons sont fusionnés et les
- * sections hors deck (sideboard, maybeboard, jetons) sont ignorées.
+ * Returns [{ name, qty, set, cn }]: duplicates are merged and sections outside
+ * the deck (sideboard, maybeboard, tokens) are skipped.
  */
 export function parseDeckText(text) {
   const out = new Map();
@@ -15,7 +16,7 @@ export function parseDeckText(text) {
     let line = raw.trim();
     if (!line || line.startsWith('#') || line.startsWith('//')) continue;
 
-    // En-têtes de section : « Sideboard », « Commander: », « // Maybeboard »…
+    // Section headings: "Sideboard", "Commander:", "// Maybeboard"…
     const header = line.replace(/[:\s]+$/, '').replace(/\s*\(\d+\)$/, '');
     if (!/^\d/.test(line)) {
       if (SKIP_SECTION.test(header)) { skipping = true; continue; }
@@ -31,7 +32,7 @@ export function parseDeckText(text) {
       line = q[2];
     }
 
-    // Annotations des différents sites : *F*, [Catégorie], ^Tag^, #tag…
+    // Annotations added by the various sites: *F*, [Category], ^Tag^, #tag…
     line = line
       .replace(/\s+\*[^*]*\*/g, '')
       .replace(/\s+\[[^\]]*\]/g, '')

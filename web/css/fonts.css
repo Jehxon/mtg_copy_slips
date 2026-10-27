@@ -1,6 +1,6 @@
-/* Polices libres (SIL Open Font License, voir web/fonts/OFL-*.txt).
-   Elles sont fournies avec l'outil pour que le texte soit calibré
-   à l'identique sous Windows et Linux. */
+/* Open fonts (SIL Open Font License, see web/fonts/OFL-*.txt).
+   They ship with the tool so text is fitted identically on Windows
+   and Linux. */
 @font-face {
   font-family: "Barlow Semi Condensed";
   src: url("../fonts/BarlowSemiCondensed-Regular.ttf") format("truetype");

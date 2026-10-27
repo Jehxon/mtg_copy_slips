@@ -1,16 +1,16 @@
-// Disposition des rectangles sur les pages et rendu HTML des pages.
+// Lays slips out on pages and renders the pages' HTML.
 import { PAD, GAP } from './fit.js';
 
 export const PAPERS = {
   a4: { w: 210, h: 297, label: 'A4' },
   letter: { w: 215.9, h: 279.4, label: 'US Letter' },
 };
-const MIN_MARGIN = 6; // zone non imprimable de la plupart des imprimantes (mm)
+const MIN_MARGIN = 6; // non-printable area of most printers (mm)
 const MARK_LEN = 5;
 
 const r3 = (x) => Math.round(x * 1000) / 1000;
 
-/** Grille de rectangles qui tient sur une page, centrée. */
+/** The grid of slips that fits on a page, centered. */
 export function pageGrid(S) {
   const P = PAPERS[S.paper] || PAPERS.a4;
   const g = S.slipGap;
@@ -79,7 +79,7 @@ function slipHTML(slip, i, G, S) {
     + '</div>';
 }
 
-/** Remplit `container` avec les pages ; renvoie le nombre de pages. */
+/** Fills `container` with the pages; returns the page count. */
 export function renderPages(container, slips, S) {
   const G = pageGrid(S);
   const pages = [];
