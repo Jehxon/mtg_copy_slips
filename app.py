@@ -17,6 +17,8 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -581,6 +583,26 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, target.read_bytes(), ctype)
 
 
+def open_browser(url: str) -> None:
+    """Ouvre le navigateur par défaut.
+
+    Sous Linux, les navigateurs basés sur Chromium (Chrome, Brave, Edge…) écrivent
+    des messages de diagnostic sans gravité (« zygote … Broken pipe ») quand ils
+    transmettent l'adresse à une fenêtre déjà ouverte. On les envoie vers /dev/null
+    pour ne pas polluer la console.
+    """
+    if sys.platform.startswith("linux") and not os.environ.get("BROWSER"):
+        for cmd in (["xdg-open", url], ["gio", "open", url]):
+            if shutil.which(cmd[0]):
+                try:
+                    subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                     stderr=subprocess.DEVNULL, start_new_session=True)
+                    return
+                except OSError:
+                    continue
+    webbrowser.open(url)
+
+
 def main() -> None:
     for stream in (sys.stdout, sys.stderr):
         try:
@@ -610,7 +632,7 @@ def main() -> None:
     print(f"Copy Slips est lancé : {url}")
     print("Laissez cette fenêtre ouverte pendant l'utilisation. Ctrl+C (ou fermer la fenêtre) pour arrêter.")
     if not args.no_browser:
-        threading.Timer(0.5, webbrowser.open, args=(url,)).start()
+        threading.Timer(0.5, open_browser, args=(url,)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
