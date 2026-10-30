@@ -20,6 +20,7 @@ const DEFAULTS = Object.freeze({
   colorFrames: true,
   slipW: 63,
   slipH: 88,
+  slipShrink: 0,
   innerCuts: true,
   blanksMode: 'auto',
   blanksCount: 0,
@@ -105,6 +106,12 @@ const cardOf = (c) => (c.id ? state.data.get(c.id) : null);
 const nameOf = (c) => displayName(cardOf(c), state.S.lang) || c.name;
 const slipCount = (c) => c.opts.slips ?? c.qty;
 
+/** Settings as fitting and page layout see them: slips are printed shrunk for the sleeves. */
+function sheetSettings() {
+  const S = state.S;
+  return { ...S, slipW: S.slipW - S.slipShrink, slipH: S.slipH - S.slipShrink };
+}
+
 function sortedCards() {
   return state.cards
     .map((c) => ({ c, g: cardOf(c) ? cardGroup(cardOf(c)) : 99, n: fold(nameOf(c)) }))
@@ -113,7 +120,7 @@ function sortedCards() {
 }
 
 function computeAll() {
-  const S = state.S;
+  const S = sheetSettings();
   const results = new Map();
   for (const c of state.cards) {
     const card = cardOf(c);
@@ -126,7 +133,7 @@ function computeAll() {
 }
 
 function slipPlan() {
-  const S = state.S;
+  const S = sheetSettings();
   const slips = [];
   for (const c of sortedCards()) {
     const r = state.results.get(c.key);
@@ -196,7 +203,7 @@ function renderPreview() {
     return;
   }
   const plan = slipPlan();
-  const n = renderPages(pagesEl, plan.slips, state.S);
+  const n = renderPages(pagesEl, plan.slips, sheetSettings());
   $('#stats').innerHTML = plan.slips.length
     ? `<b>${plural(n, 'page', 'pages')}</b> · ${plural(plan.printed, 'printed slip', 'printed slips')}`
       + ` · ${plural(plan.blanks, 'blank', 'blanks')} · ${plan.per} per page`
@@ -235,7 +242,7 @@ function options(list, current) {
 
 function editorHTML(c) {
   const card = cardOf(c);
-  const S = state.S;
+  const S = sheetSettings();
   const sig = miniHTML(buildContent(card, c.opts, S), false);
   const auto = computeLayout(sig, 'auto', S);
 
@@ -326,6 +333,8 @@ function syncSettingsForm() {
     else el.value = v;
   }
   $('#blanks-count-field').hidden = state.S.blanksMode !== 'fixed';
+  const { slipW, slipH } = sheetSettings();
+  $('#slip-size').textContent = `${fmt(slipW)} × ${fmt(slipH)} mm`;
 }
 
 function setTab(tab) {

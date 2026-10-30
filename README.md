@@ -98,12 +98,15 @@ then in the print dialog:
 - set the scale to **100% / actual size**, never "fit to page";
 - leave margins on "None" or "Default".
 
-Print a test page first and check that a slip is 63 × 88 mm (the default size).
+Print a test page first and check that a slip is 63 × 88 mm (the default size),
+or the printed size shown in *Settings* if you shrink slips for your sleeves.
 Slips touch each other, so one cut separates two neighbors. Follow the crop marks
 in the margins with a paper trimmer, or a craft knife and a ruler. The dotted lines
 inside a slip separate the minis.
 
 Thin paper (80 gsm) slides into a sleeve more easily when there's already a card in it.
+Still too tight? Set **Shrink for sleeves** in *Settings → Slips* to take a little off
+the width and the height (try 1 mm to start).
 
 ## This is not a proxy tool
 
